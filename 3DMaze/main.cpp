@@ -1,3 +1,10 @@
+/*
+Assignment 2 - 3D Maze
+Jonathan Mitchell IT 356
+*/
+
+
+
 #include <SFML/Graphics.hpp>
 #include <GL/glew.h>
 #include <SFML/OpenGL.hpp>
