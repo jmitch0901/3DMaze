@@ -21,9 +21,6 @@
     <ClInclude Include="View3DMaze.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MazeController.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Material.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -47,18 +44,15 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MazeController.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="View3DMaze.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="default.frag">
+    <None Include="triangles.frag">
       <Filter>Source Files</Filter>
     </None>
-    <None Include="default.vert">
+    <None Include="triangles.vert">
       <Filter>Source Files</Filter>
     </None>
   </ItemGroup>

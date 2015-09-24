@@ -1,11 +1,11 @@
 #ifndef _VIEW_H_
 #define _VIEW_H_
-#include "MazeController.h"
 #include <GL/glew.h>
 #include <GL/gl.h>
-#include <string>
 #include <stack>
 #include <glm/glm.hpp>
+#include "Object.h"
+#include "Maze.h"
 
 using namespace std;
 
@@ -22,30 +22,29 @@ class View3DMaze{
 	enum Buffer_IDs {ArrayBuffer,IndexBuffer,NumBuffers};
 
 private:
+	int WINDOW_WIDTH, WINDOW_HEIGHT;
+	float aspectRatio;
 
-	MazeController* mazeController;
+	int startX, startY, lastX, lastY;
 
 	GLuint programID;
-	GLuint vao;
-	GLuint vbo[NumBuffers];
 
+	vector<Object *> objectsList;
 	stack<glm::mat4> proj, modelView;
+
+	glm::mat4 mazeTransform;
 
 	GLint projectionLocation,
 		modelViewLocation, 
-		vPositionLocation, 
-		vColorLocation;
+		objectColorLocation;
 
-	int WINDOW_WIDTH, WINDOW_HEIGHT;
-
-	float aspectRatio;
-
-	void reload();
-	
+	Maze *maze;
 
 public:
 	View3DMaze();
 	~View3DMaze();
+
+	void initialize(Maze* maze);
 
 	void onMousePressed(const int mouseX, const int mouseY);
 	void onMouseMoved(const int mouseX, const int mouseY);
@@ -55,9 +54,6 @@ public:
 
 	void getOpenGLVersion(int *major, int *minor);
 	void getGLSLVersion(int *major, int *minor);
-
-	void setMazeController(MazeController *mazeController);
-	
 
 protected:
 	

@@ -1,31 +1,35 @@
 #include "View3DMaze.h"
 #include <GL/glew.h>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
 #include <iostream>
 #include <cstdlib>
 #include <fstream>
-
+#include "OBJImporter.h"
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <cmath>
 /*
 	Jonathan Mitchell
 */
 using namespace std;
 
 View3DMaze::View3DMaze(){
-	mazeController = NULL;
+	mazeTransform = glm::mat4(1.0f);
+
 }
 
 View3DMaze::~View3DMaze(){
+	 for (int i=0;i<objectsList.size();i++)
+    {
+        delete objectsList[i];
+    }
 
+    objectsList.clear();
 }
 
 void View3DMaze::resize(int w, int h){
 	WINDOW_WIDTH=w;
 	WINDOW_HEIGHT=h;
 	aspectRatio = w/(float)h;
-
-	if(mazeController!=NULL)
-		mazeController->onAspectRatioChanged(aspectRatio);
 
 	while(!proj.empty()){
 		proj.pop();
@@ -120,13 +124,13 @@ void View3DMaze::printShaderInfoToLog(GLuint shader){
     }
 }
 
-void View3DMaze::setMazeController(MazeController *mazeController){
-	this->mazeController = mazeController;
+void View3DMaze::initialize(Maze* maze){
+	this->maze = maze;
 
 	ShaderInfo shaders[] =
     {
-        {GL_VERTEX_SHADER,"default.vert"},
-        {GL_FRAGMENT_SHADER,"default.frag"},
+        {GL_VERTEX_SHADER,"triangles.vert"},
+        {GL_FRAGMENT_SHADER,"triangles.frag"},
         {GL_NONE,""}
     };
 
@@ -136,55 +140,117 @@ void View3DMaze::setMazeController(MazeController *mazeController){
 
 	projectionLocation = glGetUniformLocation(programID,"projection");
     modelViewLocation = glGetUniformLocation(programID,"modelview");
-    vPositionLocation = glGetAttribLocation(programID,"vPosition");
-    vColorLocation = glGetAttribLocation(programID,"vColor");
+	objectColorLocation = glGetAttribLocation(programID,"vColor");
 
-	glGenVertexArrays(1,&vao);
-	glBindVertexArray(vao);
-	glGenBuffers(NumBuffers,&vbo[0]);
+
+	Object *o;
+	TriangleMesh tm;
+
+	o = new Object();
+	OBJImporter::importFile(tm,string("models/box"),false);
+	o->init(tm);
+	o->setColor(0,0,0);
+	o->setTransform(glm::translate(glm::mat4(1.0),glm::vec3(0,50.0f,0)) * glm::scale(glm::mat4(1.0),glm::vec3(150,5,150)));
+	objectsList.push_back(o);
 	
-	glBindBuffer(GL_ARRAY_BUFFER,vbo[ArrayBuffer]);
-	glBufferData(GL_ARRAY_BUFFER,mazeController->getBufferByteCount(),mazeController->getArrayStart(),GL_STATIC_DRAW);
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,vbo[IndexBuffer]);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER,mazeController->getIndicesByteCount(),mazeController->getIndicesStart(),GL_STATIC_DRAW);
-
-	glBindBuffer(GL_ARRAY_BUFFER,vbo[ArrayBuffer]);
-	glVertexAttribPointer(vPositionLocation,4,GL_FLOAT,GL_FALSE,sizeof(VertexAttribs),BUFFER_OFFSET(0));
-	glEnableVertexAttribArray(vPositionLocation);
-	glVertexAttribPointer(vColorLocation,3,GL_FLOAT,GL_FALSE,sizeof(VertexAttribs),BUFFER_OFFSET(4*sizeof(GLfloat)));
-    glEnableVertexAttribArray(vColorLocation);
-
-	glBindBuffer(GL_ARRAY_BUFFER,0);
-	glBindVertexArray(0);
 	glUseProgram(0);
-
 	
 }
 
-void View3DMaze::reload(){
-
-}
 
 void View3DMaze::onMousePressed(const int mouseX, const int mouseY){
-
+	lastX = startX = mouseX;
+	lastY = startY = mouseY;
 }
 
 void View3DMaze::onMouseMoved(const int mouseX, const int mouseY){
+
+	bool isStartXBig = false;
+	bool isStartYBig = false;
+
+	int bigX = (isStartXBig = (startX>=mouseX)) ? startX : mouseX;
+	int bigY = (isStartYBig = (startY>=mouseY)) ? startY : mouseY;
+
+	int smallX = isStartXBig ? mouseX : startX;
+	int smallY = isStartYBig ? mouseY : startY;
+
+	float x = smallY/(float)bigY;
+	float y = smallX/(float)bigX;
+	float z = 0.0f;
+
+	float theta = 0.04f;
+
+	if(mouseX > lastX)
+		y*=-1.0f;
+	if(mouseY > lastY)
+		x*=-1.0f;
+
+
+	//Determines which mouse direction is dominant.
+	if(abs(mouseX - startX) > abs(mouseY - startY)){
+		x = 0.0f;
+	} else {
+		y = 0.0f;
+	}
+
+	//cout<<"start x: "<<startX<<", mouseX: "<<mouseX<<endl;
+
+	/*float x,y;
+	float z = 1.0f;
+	float theta = 1.0f;
+
+	x = mouseX / startX;
+	y = mouseY / startY;*/
+
+	//Check to see whether or not you are dragging the mouse back
+
+	mazeTransform = glm::rotate(
+		mazeTransform,
+		theta,
+		glm::vec3(x,y,z)
+		);
+
+	lastX = mouseX;
+	lastY = mouseY;
 
 }
 
 void View3DMaze::draw(){
 
 	glUseProgram(programID);
-	glBindVertexArray(vao);
-
 	while (!modelView.empty())
         modelView.pop();
 
+	glEnable(GL_LINE_SMOOTH);// or GL_POLYGON_SMOOTH 
+	glEnable(GL_BLEND); 
+	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA); ;
+	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST); //GL_FASTEST,GL_DONT_CARE 
+
+	modelView.push(glm::mat4(1.0));
+    modelView.top() *= glm::lookAt(
+		glm::vec3(0,10,50),
+		glm::vec3(0,0,0),
+		glm::vec3(0,1,0));
+
+	modelView.top() *= mazeTransform;
+    glUniformMatrix4fv(projectionLocation,1,GL_FALSE,glm::value_ptr(proj.top()));
+
+	//glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
+	for(int i = 0 ; i < objectsList.size(); i++){
+		modelView.top() *= objectsList[i]->getTransform() * glm::translate(glm::mat4(1.0f),glm::vec3(0,-10.0f,0));
+        glm::vec4 color = objectsList[i]->getColor();
+
+		//The total transformation is whatever was passed to it, with its own transformation
+        glUniformMatrix4fv(modelViewLocation,1,GL_FALSE,glm::value_ptr(modelView.top()));
+        //set the color for all vertices to be drawn for this object
+        glVertexAttrib3fv(objectColorLocation,glm::value_ptr(color));
+
+		objectsList[i]->draw();
+	}
+	glFinish();
+    modelView.pop();
 
 
-	glBindVertexArray(0);
 	glUseProgram(0);
 }
 
