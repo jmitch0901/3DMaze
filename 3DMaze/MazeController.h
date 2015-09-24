@@ -2,11 +2,12 @@
 #define _MY_MAZE_CONTROLLER_
 
 #include "Maze.h"
-#include <vector>
+
 #include <GL/glew.h>
 #include <GL/gl.h>
 #include <iostream>
 #include <glm/gtc/matrix_transform.hpp>
+#include <vector>
 
 
 class VertexAttribs{

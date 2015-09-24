@@ -79,8 +79,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Material.h" />
     <ClInclude Include="MazeController.h" />
     <ClInclude Include="Maze.h" />
+    <ClInclude Include="Object.h" />
+    <ClInclude Include="OBJExporter.h" />
+    <ClInclude Include="OBJImporter.h" />
+    <ClInclude Include="TriangleMesh.h" />
     <ClInclude Include="View3DMaze.h" />
   </ItemGroup>
   <ItemGroup>

@@ -2,9 +2,6 @@
 Assignment 2 - 3D Maze
 Jonathan Mitchell IT 356
 */
-
-
-
 #include <SFML/Graphics.hpp>
 #include <GL/glew.h>
 #include <SFML/OpenGL.hpp>
@@ -21,6 +18,8 @@ sf::Clock sfclock;
 
 int frames;
 double frame_rate;
+int mouseX, mouseY;
+bool mouseIsPressed = false;
 
 View3DMaze v;
 sf::RenderWindow* renderWindow;
@@ -34,6 +33,7 @@ void initialize();
 
 //Start Here
 int main(int argc, char *argv[]){
+	
 	frames = 0;
 	frame_rate = 0;
     // Request a 32-bits depth buffer when creating the window
@@ -41,11 +41,12 @@ int main(int argc, char *argv[]){
     contextSettings.depthBits = 32;
 	contextSettings.majorVersion = 4;
 	contextSettings.minorVersion = 0;
-
+	
     // Create the main window
-    sf::RenderWindow window(sf::VideoMode(800, 600), "Jon Mitchell A1 - MazeDraw", sf::Style::Default, contextSettings);
+    sf::RenderWindow window(sf::VideoMode(800, 600), "Jon Mitchell A2 - 3D Maze", sf::Style::Default, contextSettings);
 	renderWindow = &window;
 	resize(800,600);
+	
 
  	window.setActive();   
 
@@ -64,6 +65,7 @@ int main(int argc, char *argv[]){
 
 
 
+	//Game Loop
 	 while (window.isOpen())
     {
         // Process events
@@ -77,8 +79,6 @@ int main(int argc, char *argv[]){
 		if (window.isOpen())
 			display(&window);
     }
-
-    
 
     return EXIT_SUCCESS;
 }
@@ -104,19 +104,25 @@ void processEvent(sf::Event event,sf::RenderWindow& window)
 
 	if(event.mouseButton.button == sf::Mouse::Left && event.type == sf::Event::MouseButtonPressed){
 		cout<<"Mouse Pressed "<<endl;
-		
+		mouseIsPressed=true;
+		mouseX = sf::Mouse::getPosition(window).x;
+		mouseY = window.getSize().y -  sf::Mouse::getPosition(window).y;
+		v.onMousePressed(mouseX, mouseY);
 	}
 
 	if(event.mouseButton.button == sf::Mouse::Left && event.type == sf::Event::MouseButtonReleased){
 		cout<<"Mouse Released"<<endl;
-		
+		mouseIsPressed=false;
 	}
 
 	
 
-	/*if(mouseIsPressed && event.type == sf::Event::MouseMoved){
-		
-	}*/
+	if(mouseIsPressed && event.type == sf::Event::MouseMoved){
+		mouseX = sf::Mouse::getPosition(window).x;
+		mouseY = window.getSize().y - sf::Mouse::getPosition(window).y;
+
+		v.onMouseMoved(mouseX,sf::Mouse::getPosition(window).y);
+	}
 }
 
 void drawText(sf::RenderWindow *window,string text,int x,int y)

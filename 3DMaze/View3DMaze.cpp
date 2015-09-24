@@ -5,19 +5,30 @@
 #include <iostream>
 #include <cstdlib>
 #include <fstream>
+
 using namespace std;
 
 View3DMaze::View3DMaze(){
-
+	mazeController = NULL;
 }
 
-View3DMaze::~View3DMaze(){}
+View3DMaze::~View3DMaze(){
+
+}
 
 void View3DMaze::resize(int w, int h){
 	WINDOW_WIDTH=w;
 	WINDOW_HEIGHT=h;
 	aspectRatio = w/(float)h;
-	mazeController->onAspectRatioChanged(aspectRatio);
+
+	if(mazeController!=NULL)
+		mazeController->onAspectRatioChanged(aspectRatio);
+
+	while(!proj.empty()){
+		proj.pop();
+	}
+
+	proj.push(glm::ortho(-200.0f,200.0f,-200.0f*WINDOW_HEIGHT/WINDOW_WIDTH,200.0f*WINDOW_HEIGHT/WINDOW_WIDTH,0.1f,10000.0f));
 }
 
 GLuint View3DMaze::linkShadersToGPU(ShaderInfo* shaders){
@@ -122,14 +133,13 @@ void View3DMaze::setMazeController(MazeController *mazeController){
 
 	projectionLocation = glGetUniformLocation(programID,"projection");
     modelViewLocation = glGetUniformLocation(programID,"modelview");
-
     vPositionLocation = glGetAttribLocation(programID,"vPosition");
     vColorLocation = glGetAttribLocation(programID,"vColor");
 
 	glGenVertexArrays(1,&vao);
 	glBindVertexArray(vao);
 	glGenBuffers(NumBuffers,&vbo[0]);
-
+	
 	glBindBuffer(GL_ARRAY_BUFFER,vbo[ArrayBuffer]);
 	glBufferData(GL_ARRAY_BUFFER,mazeController->getBufferByteCount(),mazeController->getArrayStart(),GL_STATIC_DRAW);
 
@@ -145,15 +155,72 @@ void View3DMaze::setMazeController(MazeController *mazeController){
 	glBindBuffer(GL_ARRAY_BUFFER,0);
 	glBindVertexArray(0);
 	glUseProgram(0);
+
+	
 }
 
 void View3DMaze::reload(){
 
 }
 
-void View3DMaze::draw(){
+void View3DMaze::onMousePressed(const int mouseX, const int mouseY){
 
 }
+
+void View3DMaze::onMouseMoved(const int mouseX, const int mouseY){
+
+}
+
+void View3DMaze::draw(){
+
+	glUseProgram(programID);
+	glBindVertexArray(vao);
+
+	while (!modelView.empty())
+        modelView.pop();
+
+	glBindVertexArray(0);
+	glUseProgram(0);
+}
+
+void View3DMaze::getOpenGLVersion(int *major,int *minor)
+{
+    const char *verstr = (const char *)glGetString(GL_VERSION);
+    if ((verstr == NULL) || (sscanf_s(verstr,"%d.%d",major,minor)!=2))
+    {
+        *major = *minor = 0;
+    }
+}
+
+void View3DMaze::getGLSLVersion(int *major,int *minor)
+{
+    int gl_major,gl_minor;
+
+    getOpenGLVersion(&gl_major,&gl_minor);
+    *major = *minor = 0;
+
+    if (gl_major==1)
+    {
+        /* GL v1.x can only provide GLSL v1.00 as an extension */
+        const char *extstr = (const char *)glGetString(GL_EXTENSIONS);
+        if ((extstr!=NULL) && (strstr(extstr,"GL_ARB_shading_language_100")!=NULL))
+        {
+            *major = 1;
+            *minor = 0;
+        }
+    }
+    else if (gl_major>=2)
+    {
+        /* GL v2.0 and greater must parse the version string */
+        const char *verstr = (const char *)glGetString(GL_SHADING_LANGUAGE_VERSION);
+        if ((verstr==NULL) || (sscanf_s(verstr,"%d.%d",major,minor) !=2))
+        {
+            *major = 0;
+            *minor = 0;
+        }
+    }
+}
+
 
 
 

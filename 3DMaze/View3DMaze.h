@@ -1,15 +1,13 @@
 #ifndef _VIEW_H_
 #define _VIEW_H_
-
-#include <SFML/Graphics.hpp>
-#include <GL/glew.h>
-#include <SFML/Graphics.hpp>
-#include <GL/GL.h>
-#include <string>
 #include "MazeController.h"
-using namespace std;
-
+#include <GL/glew.h>
+#include <GL/gl.h>
+#include <string>
+#include <stack>
 #include <glm/glm.hpp>
+
+using namespace std;
 
 
 class View3DMaze{
@@ -31,7 +29,8 @@ private:
 	GLuint vao;
 	GLuint vbo[NumBuffers];
 
-	glm::mat4 proj,modelView;
+	stack<glm::mat4> proj, modelView;
+
 	GLint projectionLocation,
 		modelViewLocation, 
 		vPositionLocation, 
@@ -47,6 +46,9 @@ private:
 public:
 	View3DMaze();
 	~View3DMaze();
+
+	void onMousePressed(const int mouseX, const int mouseY);
+	void onMouseMoved(const int mouseX, const int mouseY);
 
 	void resize(int w, int h);
 	void draw();
