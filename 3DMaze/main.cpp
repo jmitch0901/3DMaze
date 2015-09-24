@@ -23,7 +23,7 @@ bool mouseIsPressed = false;
 
 View3DMaze v;
 sf::RenderWindow* renderWindow;
-MazeController* mazeController;
+Maze* pMaze;
 
 void resize(int w,int h);
 void display(sf::RenderWindow *window);
@@ -59,8 +59,9 @@ int main(int argc, char *argv[]){
         return EXIT_FAILURE;
     }
 
-	MazeController mc(Maze("maze-10x10.txt"),800/(float)600);
-	mazeController=&mc;
+
+	Maze maze("maze-10x10.txt");
+	pMaze=&maze;
 	initialize();
 
 
@@ -113,6 +114,7 @@ void processEvent(sf::Event event,sf::RenderWindow& window)
 	if(event.mouseButton.button == sf::Mouse::Left && event.type == sf::Event::MouseButtonReleased){
 		cout<<"Mouse Released"<<endl;
 		mouseIsPressed=false;
+
 	}
 
 	
@@ -121,7 +123,8 @@ void processEvent(sf::Event event,sf::RenderWindow& window)
 		mouseX = sf::Mouse::getPosition(window).x;
 		mouseY = window.getSize().y - sf::Mouse::getPosition(window).y;
 
-		v.onMouseMoved(mouseX,sf::Mouse::getPosition(window).y);
+		//v.onMouseMoved(mouseX,sf::Mouse::getPosition(window).y);
+		v.onMouseMoved(mouseX,mouseY);
 	}
 }
 
@@ -193,7 +196,7 @@ void initialize()
     v.getGLSLVersion(&major,&minor);
     cout << "GLSL version supported : "<<major<<"."<<minor << endl;
 
-	v.setMazeController(mazeController);
+	v.initialize(pMaze);
 
 	//if (!font.loadFromFile("resources/sansation.ttf"))
 		//return;
