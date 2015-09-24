@@ -6,6 +6,9 @@
 #include <cstdlib>
 #include <fstream>
 
+/*
+	Jonathan Mitchell
+*/
 using namespace std;
 
 View3DMaze::View3DMaze(){
