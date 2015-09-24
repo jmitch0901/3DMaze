@@ -31,7 +31,8 @@ void MazeController::onAspectRatioChanged(const float aspectRatio){
 
 MazeController::~MazeController(){}
 
-
+void MazeController::testCube(){
+}
 
 
 

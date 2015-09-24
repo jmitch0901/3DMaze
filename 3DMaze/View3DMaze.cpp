@@ -182,6 +182,8 @@ void View3DMaze::draw(){
 	while (!modelView.empty())
         modelView.pop();
 
+
+
 	glBindVertexArray(0);
 	glUseProgram(0);
 }

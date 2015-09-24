@@ -25,6 +25,8 @@ private:
 	vector<VertexAttribs> vertices;
 	vector<GLuint> indices;
 
+	void testCube();
+
 	float aspectRatio;
 
 public:
