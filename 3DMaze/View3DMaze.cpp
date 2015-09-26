@@ -294,9 +294,28 @@ void View3DMaze::createWalls(TriangleMesh &tm,int floorX, int floorY, int floorZ
 				
 			}
 
-			//Right Wall?
+			if(j == COLUMN_COUNT - 1){
+				//Right Wall?
+				if((CELL_CODE&2)==2){
+					o = new Object();
+				o->init(tm);
+				o->setColor(0,1,0);
+				wallTranslateStack.top() *= glm::translate(glm::mat4(1.0f),glm::vec3(cellWallX,0,0));
+				//o->setTransform(glm::translate(glm::mat4(1.0f),glm::vec3() * wallTranslateStack.top() * ))
+				o->setTransform(glm::translate(glm::mat4(1.0f),glm::vec3(0.5f * cellWallY,0,-2*cellWallY)) *  wallTranslateStack.top() * scaleTransform);
+				//o->setTransform(glm::translate(glm::mat4(1.0f),glm::vec3(-2*cellWallY,0,-0.5f * cellWallY)) * glm::rotate(wallTranslateStack.top(),glm::radians(90.0f),glm::vec3(0.0f,1.0f,0.0f)) * scaleTransform);
+				objectsList.push_back(o);
 
-			//Bottom Wall?
+				}
+
+
+
+				//Bottom Wall?
+
+
+			}
+
+			
 
 		}
 
