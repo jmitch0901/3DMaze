@@ -221,7 +221,7 @@ void View3DMaze::initialize(Maze* maze){
 	objectsList.push_back(o);
 
 
-	createWalls(floorX,floorY, floorZ);
+	createWalls(floorX,floorY,floorZ);
 	
 	glUseProgram(0);
 	
@@ -234,8 +234,6 @@ void View3DMaze::createWalls(int floorX, int floorY, int floorZ){
 
 
 	//The stack so we can reference a previous transformed box.
-	stack<glm::mat4> wallTranslateStack;
-	wallTranslateStack.push(glm::mat4(1.0f));
 	
 
 	const int ROW_COUNT = maze->getRowCount();
@@ -250,20 +248,27 @@ void View3DMaze::createWalls(int floorX, int floorY, int floorZ){
 
 
 
-	
+	stack<glm::mat4> wallTranslateStack;
 
+	//For the ROWS
+	wallTranslateStack.push(glm::mat4(1.0f));
+
+	//For COLUMNS
+	wallTranslateStack.push(glm::translate(glm::mat4(1.0f),glm::vec3(floorX/2.0f,floorY,floorZ/2.0f)));
+	//wallTranslateStack.push(glm::translate(glm::mat4(1.0f),glm::vec3(floorX/2.0f,floorY,floorZ/2.0f)));
 
 	for(int i = 0; i < ROW_COUNT; i++){
 
-		wallTranslateStack.top() *= glm::translate(glm::mat4(1.0f),glm::vec3(floorX/2.0f,floorY,floorZ/2.0f));
-		//wallTranslateStack.push(wallTranslateStack.top() * glm::translate(glm::mat4(1.0f),glm::vec3(1.0f,1.0f,floorZ/2.0f)));
-		//wallTranslateStack.top() *= glm::translate(glm::mat4(1.0f),glm::vec3(floorX/2.0f,floorY,floorZ/2.0f));
+
+		wallTranslateStack.push(wallTranslateStack.top() * glm::translate(glm::mat4(1.0f),glm::vec3(cellWallX,0,0)));
+
 
 		for(int j = 0; j < COLUMN_COUNT; j++){
 
 			const int CELL_CODE = maze->getCellLogicAsInteger(j,i);
-			//wallTranslateStack.push(wallTranslateStack.top() * glm::translate(glm::mat4(1.0f),glm::vec3(cellWallX,0,0)));
-			wallTranslateStack.top() *= glm::translate(glm::mat4(1.0f),glm::vec3(cellWallX,0,0));
+
+			
+			
 			//Left Wall
 			if((CELL_CODE&8)==8){
 				o = new Object();
@@ -273,6 +278,8 @@ void View3DMaze::createWalls(int floorX, int floorY, int floorZ){
 				o->setTransform(wallTranslateStack.top() * scaleTransform);
 				objectsList.push_back(o);
 			}
+
+			wallTranslateStack.top() *= glm::translate(glm::mat4(1.0f),glm::vec3(cellWallX,0,0));
 
 			//Top Wall
 			/*if((CELL_CODE&4)==4){
@@ -286,6 +293,7 @@ void View3DMaze::createWalls(int floorX, int floorY, int floorZ){
 				
 			}*/
 
+			
 			//wallTranslateStack.pop();
 
 			//Right Wall?
@@ -295,7 +303,7 @@ void View3DMaze::createWalls(int floorX, int floorY, int floorZ){
 		}
 
 		wallTranslateStack.pop();
-		wallTranslateStack.push(glm::mat4(1.0f));
+		wallTranslateStack.push(wallTranslateStack.top() * glm::translate(glm::mat4(1.0f),glm::vec3(0,0,-cellWallZ)));
 		//wallTranslateStack.push()
 
 
