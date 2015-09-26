@@ -42,7 +42,7 @@ private:
 
 	Maze *maze;
 
-	void createWalls(int floorX, int floorY, int floorZ);
+	void createWalls(TriangleMesh &tm,int floorX, int floorY, int floorZ);
 
 public:
 	View3DMaze();
