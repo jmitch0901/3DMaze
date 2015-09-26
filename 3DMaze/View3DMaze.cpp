@@ -258,9 +258,7 @@ void View3DMaze::createWalls(TriangleMesh &tm,int floorX, int floorY, int floorZ
 
 	for(int i = 0; i < ROW_COUNT; i++){
 
-
 		//wallTranslateStack.push(wallTranslateStack.top() * glm::translate(glm::mat4(1.0f),glm::vec3(cellWallX,0,0)));
-
 
 		for(int j = 0; j < COLUMN_COUNT; j++){
 
@@ -294,26 +292,33 @@ void View3DMaze::createWalls(TriangleMesh &tm,int floorX, int floorY, int floorZ
 				
 			}
 
-			if(j == COLUMN_COUNT - 1){
-				//Right Wall?
+			//Bottom Wall?
+			if(i == ROW_COUNT - 1){
+				//cout<<"CELL CODE: "<<CELL_CODE<<endl;
+				if((CELL_CODE&1)==1){			
+					o = new Object();
+					o->init(tm);
+					o->setColor(1,0,1);
+					o->setTransform(glm::translate(glm::mat4(1.0f),glm::vec3(-2*cellWallY,0,(-cellWallZ)+(0.5f * cellWallY))) * glm::rotate(wallTranslateStack.top(),glm::radians(90.0f),glm::vec3(0.0f,1.0f,0.0f)) * scaleTransform);
+					objectsList.push_back(o);
+				}
+			}
+
+
+			//Right Wall?
+			if(j == COLUMN_COUNT - 1){			
 				if((CELL_CODE&2)==2){
 					o = new Object();
-				o->init(tm);
-				o->setColor(0,1,0);
-				wallTranslateStack.top() *= glm::translate(glm::mat4(1.0f),glm::vec3(cellWallX,0,0));
-				//o->setTransform(glm::translate(glm::mat4(1.0f),glm::vec3() * wallTranslateStack.top() * ))
-				o->setTransform(glm::translate(glm::mat4(1.0f),glm::vec3(0.5f * cellWallY,0,-2*cellWallY)) *  wallTranslateStack.top() * scaleTransform);
-				//o->setTransform(glm::translate(glm::mat4(1.0f),glm::vec3(-2*cellWallY,0,-0.5f * cellWallY)) * glm::rotate(wallTranslateStack.top(),glm::radians(90.0f),glm::vec3(0.0f,1.0f,0.0f)) * scaleTransform);
-				objectsList.push_back(o);
+					o->init(tm);
+					o->setColor(0,1,0);
+					wallTranslateStack.top() *= glm::translate(glm::mat4(1.0f),glm::vec3(cellWallX,0,0));
+					o->setTransform(glm::translate(glm::mat4(1.0f),glm::vec3(0.5f * cellWallY,0,-2*cellWallY)) *  wallTranslateStack.top() * scaleTransform);
+					objectsList.push_back(o);
 
 				}
-
-
-
-				//Bottom Wall?
-
-
 			}
+
+			
 
 			
 
@@ -321,6 +326,8 @@ void View3DMaze::createWalls(TriangleMesh &tm,int floorX, int floorY, int floorZ
 
 		wallTranslateStack.pop();
 		wallTranslateStack.push(wallTranslateStack.top() * glm::translate(glm::mat4(1.0f),glm::vec3(0,0,-cellWallZ)));
+
+		
 
 
 	}
