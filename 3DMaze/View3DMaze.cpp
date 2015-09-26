@@ -259,32 +259,37 @@ void View3DMaze::createWalls(TriangleMesh &tm,int floorX, int floorY, int floorZ
 	for(int i = 0; i < ROW_COUNT; i++){
 
 
-		wallTranslateStack.push(wallTranslateStack.top() * glm::translate(glm::mat4(1.0f),glm::vec3(cellWallX,0,0)));
+		//wallTranslateStack.push(wallTranslateStack.top() * glm::translate(glm::mat4(1.0f),glm::vec3(cellWallX,0,0)));
 
 
 		for(int j = 0; j < COLUMN_COUNT; j++){
 
 			const int CELL_CODE = maze->getCellLogicAsInteger(j,i);
 
-			
+			if(j==0){
+				wallTranslateStack.push(wallTranslateStack.top());
+			} else {
+
+				wallTranslateStack.top() *= glm::translate(glm::mat4(1.0f),glm::vec3(cellWallX,0,0));
+			}
 			
 			//Left Wall
 			if((CELL_CODE&8)==8){
 				o = new Object();
 				o->init(tm);
 				o->setColor(0,0,1);
-				o->setTransform(wallTranslateStack.top() * scaleTransform);
+				o->setTransform(glm::translate(glm::mat4(1.0f),glm::vec3(-0.5f * cellWallY,0,-2*cellWallY)) * wallTranslateStack.top() * scaleTransform);
 				objectsList.push_back(o);
 			}
 
-			wallTranslateStack.top() *= glm::translate(glm::mat4(1.0f),glm::vec3(cellWallX,0,0));
+		
 
 			//Top Wall
 			if((CELL_CODE&4)==4){
 				o = new Object();
 				o->init(tm);
 				o->setColor(0,1,1);
-				o->setTransform(glm::rotate(wallTranslateStack.top(),glm::radians(90.0f),glm::vec3(0.0f,1.0f,0.0f)) * scaleTransform);
+				o->setTransform(glm::translate(glm::mat4(1.0f),glm::vec3(-2*cellWallY,0,-0.5f * cellWallY)) * glm::rotate(wallTranslateStack.top(),glm::radians(90.0f),glm::vec3(0.0f,1.0f,0.0f)) * scaleTransform);
 				objectsList.push_back(o);
 				
 			}
