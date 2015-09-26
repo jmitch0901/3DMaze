@@ -14,6 +14,7 @@ using namespace std;
 
 View3DMaze::View3DMaze(){
 	mazeTransform = glm::mat4(1.0f);
+	showWireFrame = false;
 
 }
 
@@ -124,42 +125,6 @@ void View3DMaze::printShaderInfoToLog(GLuint shader){
     }
 }
 
-void View3DMaze::initialize(Maze* maze){
-	this->maze = maze;
-
-	ShaderInfo shaders[] =
-    {
-        {GL_VERTEX_SHADER,"triangles.vert"},
-        {GL_FRAGMENT_SHADER,"triangles.frag"},
-        {GL_NONE,""}
-    };
-
-	programID = linkShadersToGPU(shaders);
-
-	glUseProgram(programID);
-
-	projectionLocation = glGetUniformLocation(programID,"projection");
-    modelViewLocation = glGetUniformLocation(programID,"modelview");
-	objectColorLocation = glGetAttribLocation(programID,"vColor");
-
-
-	Object *o;
-	TriangleMesh tm;
-
-	o = new Object();
-	OBJImporter::importFile(tm,string("models/box"),false);
-	o->init(tm);
-	o->setColor(0,0,0);
-	o->setTransform(glm::scale(glm::mat4(1.0),glm::vec3(200,5,200)));
-	//o->setTransform(glm::translate(glm::mat4(1.0),glm::vec3(0,50.0f,0)) * glm::scale(glm::mat4(1.0),glm::vec3(150,5,150)));
-	objectsList.push_back(o);
-
-	
-	glUseProgram(0);
-	
-}
-
-
 void View3DMaze::onMousePressed(const int mouseX, const int mouseY){
 	lastX = startX = mouseX;
 	lastY = startY = mouseY;
@@ -217,6 +182,148 @@ void View3DMaze::onMouseMoved(const int mouseX, const int mouseY){
 
 }
 
+void View3DMaze::setShowWireFrame(bool showWireFrame){
+	this->showWireFrame = showWireFrame;
+}
+
+void View3DMaze::initialize(Maze* maze){
+	this->maze = maze;
+
+	ShaderInfo shaders[] =
+    {
+        {GL_VERTEX_SHADER,"triangles.vert"},
+        {GL_FRAGMENT_SHADER,"triangles.frag"},
+        {GL_NONE,""}
+    };
+
+	programID = linkShadersToGPU(shaders);
+
+	glUseProgram(programID);
+
+	projectionLocation = glGetUniformLocation(programID,"projection");
+    modelViewLocation = glGetUniformLocation(programID,"modelview");
+	objectColorLocation = glGetAttribLocation(programID,"vColor");
+
+
+	Object *o;
+	TriangleMesh tm;
+
+	int floorX = 200;
+	int floorY = 5;
+	int floorZ = 200;
+
+	//Sets just the floor
+	o = new Object();
+	OBJImporter::importFile(tm,string("models/box"),false);
+	o->init(tm);
+	o->setColor(0,0,0);
+	o->setTransform(glm::scale(glm::mat4(1.0),glm::vec3(floorX,floorY,floorZ)));
+	objectsList.push_back(o);
+
+
+	createWalls(floorX,floorY, floorZ);
+	
+	glUseProgram(0);
+	
+}
+
+void View3DMaze::createWalls(int floorX, int floorY, int floorZ){
+
+	Object *o;
+	TriangleMesh tm;
+
+
+	//The stack so we can reference a previous transformed box.
+	stack<glm::mat4> wallTranslateStack;
+	wallTranslateStack.push(glm::mat4(1.0f));
+	
+
+	const int ROW_COUNT = maze->getRowCount();
+	const int COLUMN_COUNT = maze->getColumnCount();
+
+	float cellWallX = -(floorX)/(float)COLUMN_COUNT;
+	float cellWallY = (float)floorY;
+	float cellWallZ = floorZ/(float)ROW_COUNT;
+
+	const glm::mat4 scaleTransform 
+		= glm::scale(glm::mat4(1.0f),glm::vec3(floorY,floorY,cellWallZ));
+
+
+
+	
+
+
+	for(int i = 0; i < ROW_COUNT; i++){
+
+		wallTranslateStack.top() *= glm::translate(glm::mat4(1.0f),glm::vec3(floorX/2.0f,floorY,floorZ/2.0f));
+		//wallTranslateStack.push(wallTranslateStack.top() * glm::translate(glm::mat4(1.0f),glm::vec3(1.0f,1.0f,floorZ/2.0f)));
+		//wallTranslateStack.top() *= glm::translate(glm::mat4(1.0f),glm::vec3(floorX/2.0f,floorY,floorZ/2.0f));
+
+		for(int j = 0; j < COLUMN_COUNT; j++){
+
+			const int CELL_CODE = maze->getCellLogicAsInteger(j,i);
+			//wallTranslateStack.push(wallTranslateStack.top() * glm::translate(glm::mat4(1.0f),glm::vec3(cellWallX,0,0)));
+			wallTranslateStack.top() *= glm::translate(glm::mat4(1.0f),glm::vec3(cellWallX,0,0));
+			//Left Wall
+			if((CELL_CODE&8)==8){
+				o = new Object();
+				OBJImporter::importFile(tm,string("models/box"),false);
+				o->init(tm);
+				o->setColor(0,0,1);
+				o->setTransform(wallTranslateStack.top() * scaleTransform);
+				objectsList.push_back(o);
+			}
+
+			//Top Wall
+			/*if((CELL_CODE&4)==4){
+				o = new Object();
+				OBJImporter::importFile(tm,string("models/box"),false);
+				o->init(tm);
+				o->setColor(0,1,1);
+
+				o->setTransform(glm::rotate(wallTranslateStack.top(),glm::radians(90.0f),glm::vec3(0.0f,1.0f,0.0f)) * scaleTransform);
+				objectsList.push_back(o);
+				
+			}*/
+
+			//wallTranslateStack.pop();
+
+			//Right Wall?
+
+			//Bottom Wall?
+
+		}
+
+		wallTranslateStack.pop();
+		wallTranslateStack.push(glm::mat4(1.0f));
+		//wallTranslateStack.push()
+
+
+	}
+
+
+	/*
+		If I want to hardcode walls in, follow code below!
+	
+	//Left Wall */
+	/*o = new Object();
+	OBJImporter::importFile(tm,string("models/box"),false);
+	o->init(tm);
+	o->setColor(0,0,1);
+	o->setTransform(glm::translate(glm::mat4(1.0f),glm::vec3(floorX/2.0f,floorY,0)) * glm::scale(glm::mat4(1.0f),glm::vec3(floorY,floorY,floorX)));//glm::translate
+	objectsList.push_back(o);
+
+
+	//Right Wall
+	o = new Object();
+	OBJImporter::importFile(tm,string("models/box"),false);
+	o->init(tm);
+	o->setColor(0,0,1);
+	o->setTransform(glm::translate(glm::mat4(1.0f),glm::vec3(-floorX/2.0f,floorY,0)) * glm::scale(glm::mat4(1.0f),glm::vec3(floorY,floorY,floorX)));//glm::translate
+	objectsList.push_back(o);*/
+	
+}
+
 void View3DMaze::draw(){
 
 	glUseProgram(programID);
@@ -237,11 +344,14 @@ void View3DMaze::draw(){
 	modelView.top() *= mazeTransform;
     glUniformMatrix4fv(projectionLocation,1,GL_FALSE,glm::value_ptr(proj.top()));
 
-	//glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
-	for(int i = 0 ; i < objectsList.size(); i++){
-		//modelView.top() *= objectsList[i]->getTransform() * glm::translate(glm::mat4(1.0f),glm::vec3(0,-10.0f,0));
+	if(showWireFrame){
+		glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
+	} else {
+		glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
+	}
 
-		glm::mat4 transform = objectsList[i]->getTransform();// * glm::translate(glm::mat4(1.0f),glm::vec3(0,-10.0f,0));
+	for(int i = 0 ; i < objectsList.size(); i++){
+		glm::mat4 transform = objectsList[i]->getTransform();
         glm::vec4 color = objectsList[i]->getColor();
 
 		//The total transformation is whatever was passed to it, with its own transformation

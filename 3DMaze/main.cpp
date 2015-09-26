@@ -20,6 +20,7 @@ int frames;
 double frame_rate;
 int mouseX, mouseY;
 bool mouseIsPressed = false;
+bool showWireFrame = false;
 
 View3DMaze v;
 sf::RenderWindow* renderWindow;
@@ -102,6 +103,10 @@ void processEvent(sf::Event event,sf::RenderWindow& window)
 	if (event.type == sf::Event::Resized)
 		resize(event.size.width, event.size.height);
 
+	if(sf::Keyboard::isKeyPressed(sf::Keyboard::W)){
+		showWireFrame = (!showWireFrame);
+		v.setShowWireFrame(showWireFrame);
+	}
 
 	if(event.mouseButton.button == sf::Mouse::Left && event.type == sf::Event::MouseButtonPressed){
 		cout<<"Mouse Pressed "<<endl;
@@ -114,10 +119,7 @@ void processEvent(sf::Event event,sf::RenderWindow& window)
 	if(event.mouseButton.button == sf::Mouse::Left && event.type == sf::Event::MouseButtonReleased){
 		cout<<"Mouse Released"<<endl;
 		mouseIsPressed=false;
-
 	}
-
-	
 
 	if(mouseIsPressed && event.type == sf::Event::MouseMoved){
 		mouseX = sf::Mouse::getPosition(window).x;
@@ -126,6 +128,8 @@ void processEvent(sf::Event event,sf::RenderWindow& window)
 		//v.onMouseMoved(mouseX,sf::Mouse::getPosition(window).y);
 		v.onMouseMoved(mouseX,mouseY);
 	}
+
+	
 }
 
 void drawText(sf::RenderWindow *window,string text,int x,int y)

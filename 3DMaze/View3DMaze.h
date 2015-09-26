@@ -25,12 +25,14 @@ private:
 	int WINDOW_WIDTH, WINDOW_HEIGHT;
 	float aspectRatio;
 
+	bool showWireFrame;
 	int startX, startY, lastX, lastY;
 
 	GLuint programID;
 
 	vector<Object *> objectsList;
-	stack<glm::mat4> proj, modelView;
+	stack<glm::mat4> proj, 
+		modelView;
 
 	glm::mat4 mazeTransform;
 
@@ -40,6 +42,8 @@ private:
 
 	Maze *maze;
 
+	void createWalls(int floorX, int floorY, int floorZ);
+
 public:
 	View3DMaze();
 	~View3DMaze();
@@ -48,6 +52,7 @@ public:
 
 	void onMousePressed(const int mouseX, const int mouseY);
 	void onMouseMoved(const int mouseX, const int mouseY);
+	void setShowWireFrame(bool showWireFrame);
 
 	void resize(int w, int h);
 	void draw();
