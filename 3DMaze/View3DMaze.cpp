@@ -35,7 +35,7 @@ void View3DMaze::resize(int w, int h){
 		proj.pop();
 	}
 
-	proj.push(glm::ortho(-200.0f,200.0f,-200.0f*WINDOW_HEIGHT/WINDOW_WIDTH,200.0f*WINDOW_HEIGHT/WINDOW_WIDTH,0.1f,10000.0f));
+	proj.push(glm::ortho(-200.0f,200.0f,-200.0f*WINDOW_HEIGHT/WINDOW_WIDTH,200.0f*WINDOW_HEIGHT/WINDOW_WIDTH,-1000.0f,1000.0f));
 }
 
 GLuint View3DMaze::linkShadersToGPU(ShaderInfo* shaders){
@@ -150,8 +150,10 @@ void View3DMaze::initialize(Maze* maze){
 	OBJImporter::importFile(tm,string("models/box"),false);
 	o->init(tm);
 	o->setColor(0,0,0);
-	o->setTransform(glm::translate(glm::mat4(1.0),glm::vec3(0,50.0f,0)) * glm::scale(glm::mat4(1.0),glm::vec3(150,5,150)));
+	o->setTransform(glm::scale(glm::mat4(1.0),glm::vec3(200,5,200)));
+	//o->setTransform(glm::translate(glm::mat4(1.0),glm::vec3(0,50.0f,0)) * glm::scale(glm::mat4(1.0),glm::vec3(150,5,150)));
 	objectsList.push_back(o);
+
 	
 	glUseProgram(0);
 	
@@ -180,7 +182,7 @@ void View3DMaze::onMouseMoved(const int mouseX, const int mouseY){
 
 	float theta = 0.04f;
 
-	if(mouseX > lastX)
+	if(mouseX < lastX)
 		y*=-1.0f;
 	if(mouseY > lastY)
 		x*=-1.0f;
@@ -237,11 +239,13 @@ void View3DMaze::draw(){
 
 	//glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
 	for(int i = 0 ; i < objectsList.size(); i++){
-		modelView.top() *= objectsList[i]->getTransform() * glm::translate(glm::mat4(1.0f),glm::vec3(0,-10.0f,0));
+		//modelView.top() *= objectsList[i]->getTransform() * glm::translate(glm::mat4(1.0f),glm::vec3(0,-10.0f,0));
+
+		glm::mat4 transform = objectsList[i]->getTransform();// * glm::translate(glm::mat4(1.0f),glm::vec3(0,-10.0f,0));
         glm::vec4 color = objectsList[i]->getColor();
 
 		//The total transformation is whatever was passed to it, with its own transformation
-        glUniformMatrix4fv(modelViewLocation,1,GL_FALSE,glm::value_ptr(modelView.top()));
+		glUniformMatrix4fv(modelViewLocation,1,GL_FALSE,glm::value_ptr(modelView.top() * transform));
         //set the color for all vertices to be drawn for this object
         glVertexAttrib3fv(objectColorLocation,glm::value_ptr(color));
 
