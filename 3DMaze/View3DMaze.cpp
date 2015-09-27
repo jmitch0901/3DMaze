@@ -7,6 +7,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <cmath>
+#include <time.h>
 /*
 	Jonathan Mitchell
 */
@@ -220,14 +221,6 @@ void View3DMaze::initialize(Maze* maze){
 	o->setTransform(glm::scale(glm::mat4(1.0),glm::vec3(floorX,floorY,floorZ)));
 	objectsList.push_back(o);
 
-	/*o = new Object();
-	OBJImporter::importFile(tm,string("models/martini_glass"),false);
-	o->init(tm);
-	o->setColor(0,1,0);
-	o->setTransform(glm::scale(glm::mat4(1.0),glm::vec3(10,10,10)));
-	objectsList.push_back(o);*/
-
-
 	createWallsAndFindHoles(tm,floorX,floorY,floorZ);
 	if(mazeIndicesWithHoles.empty()){
 		cout<<"There are no holes in this maze! Cannot create mesh object!"<<endl;
@@ -347,6 +340,8 @@ void View3DMaze::placeMartiniGlass(TriangleMesh &tm, int floorX, int floorY, int
 
 	//int holeIndex = (mazeIndicesWithHoles.size() == 1) ? 0 : rand() % mazeIndicesWithHoles.size();
 	
+	srand ( time(NULL) ); //initialize the random seed
+
 	const int ROW_COUNT = maze->getRowCount();
 	const int COLUMN_COUNT = maze->getColumnCount();
 
@@ -354,13 +349,17 @@ void View3DMaze::placeMartiniGlass(TriangleMesh &tm, int floorX, int floorY, int
 	float cellWallY = (float)floorY;
 	float cellWallZ = floorZ/(float)ROW_COUNT;
 
-	int holeIndex = rand() % mazeIndicesWithHoles.size();
+	int holeIndex = std::rand() % mazeIndicesWithHoles.size();
 
 	int columnNumber = mazeIndicesWithHoles[holeIndex][0];
 	int rowNumber = mazeIndicesWithHoles[holeIndex][1];
-	
 
-	glm::mat4 glassTransform =  glm::translate(glm::mat4(1.0f),glm::vec3(columnNumber*cellWallX,cellWallY*2,-rowNumber*cellWallZ)) * glm::translate(glm::mat4(1.0f),glm::vec3(floorX/2.0f,floorY,floorZ/2.0f)) * glm::scale(glm::mat4(1.0f),glm::vec3(cellWallZ,cellWallZ,cellWallZ));
+	cout<<"Hole List SIZE: "<<mazeIndicesWithHoles.size()<<endl;
+	cout<<"HOLE INDEX: "<<holeIndex<<endl;
+	cout<<"(COLUMN,ROW): "<<columnNumber<<", "<<rowNumber<<endl;
+	
+	//right by .5, down by .5
+	glm::mat4 glassTransform =  glm::translate(glm::mat4(1.0f),glm::vec3(columnNumber*cellWallX + (cellWallX * 0.5f),cellWallY*2,-rowNumber*cellWallZ - (0.5f*cellWallZ))) * glm::translate(glm::mat4(1.0f),glm::vec3(floorX/2.0f,floorY,floorZ/2.0f)) * glm::scale(glm::mat4(1.0f),glm::vec3(cellWallZ,cellWallZ,cellWallZ));
 
 	Object* o = new Object();
 	OBJImporter::importFile(tm,string("models/martini_glass"),false);
