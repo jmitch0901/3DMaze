@@ -10,6 +10,8 @@
 using namespace std;
 
 
+
+
 class View3DMaze{
 	#define BUFFER_OFFSET(offset) ((void *)(offset))
 
@@ -42,7 +44,11 @@ private:
 
 	Maze *maze;
 
-	void createWalls(TriangleMesh &tm,int floorX, int floorY, int floorZ);
+	vector<vector<int> > mazeIndicesWithHoles;
+
+	void createWallsAndFindHoles(TriangleMesh &tm,int floorX, int floorY, int floorZ);
+	void placeMartiniGlass(TriangleMesh &tm,int floorX, int floorY, int floorZ);
+	
 
 public:
 	View3DMaze();

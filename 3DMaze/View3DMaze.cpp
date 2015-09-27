@@ -220,16 +220,29 @@ void View3DMaze::initialize(Maze* maze){
 	o->setTransform(glm::scale(glm::mat4(1.0),glm::vec3(floorX,floorY,floorZ)));
 	objectsList.push_back(o);
 
+	/*o = new Object();
+	OBJImporter::importFile(tm,string("models/martini_glass"),false);
+	o->init(tm);
+	o->setColor(0,1,0);
+	o->setTransform(glm::scale(glm::mat4(1.0),glm::vec3(10,10,10)));
+	objectsList.push_back(o);*/
 
-	createWalls(tm,floorX,floorY,floorZ);
-	
+
+	createWallsAndFindHoles(tm,floorX,floorY,floorZ);
+	if(mazeIndicesWithHoles.empty()){
+		cout<<"There are no holes in this maze! Cannot create mesh object!"<<endl;
+	} else {
+		placeMartiniGlass(tm,floorX,floorY,floorZ);
+	}
+
 	glUseProgram(0);
 	
 }
 
-void View3DMaze::createWalls(TriangleMesh &tm,int floorX, int floorY, int floorZ){
+void View3DMaze::createWallsAndFindHoles(TriangleMesh &tm,int floorX, int floorY, int floorZ){
 
 	Object *o;
+	
 	//TriangleMesh tm;
 
 
@@ -258,11 +271,17 @@ void View3DMaze::createWalls(TriangleMesh &tm,int floorX, int floorY, int floorZ
 
 	for(int i = 0; i < ROW_COUNT; i++){
 
-		//wallTranslateStack.push(wallTranslateStack.top() * glm::translate(glm::mat4(1.0f),glm::vec3(cellWallX,0,0)));
-
 		for(int j = 0; j < COLUMN_COUNT; j++){
 
 			const int CELL_CODE = maze->getCellLogicAsInteger(j,i);
+
+			if(CELL_CODE == 0){
+				vector<int> v;
+				v.push_back(j);
+				v.push_back(i);
+				
+				mazeIndicesWithHoles.push_back(v);			
+			}
 
 			if(j==0){
 				wallTranslateStack.push(wallTranslateStack.top());
@@ -275,7 +294,7 @@ void View3DMaze::createWalls(TriangleMesh &tm,int floorX, int floorY, int floorZ
 			if((CELL_CODE&8)==8){
 				o = new Object();
 				o->init(tm);
-				o->setColor(0,0,1);
+				o->setColor(0,1,0);
 				o->setTransform(glm::translate(glm::mat4(1.0f),glm::vec3(-0.5f * cellWallY,0,-2*cellWallY)) * wallTranslateStack.top() * scaleTransform);
 				objectsList.push_back(o);
 			}
@@ -286,7 +305,7 @@ void View3DMaze::createWalls(TriangleMesh &tm,int floorX, int floorY, int floorZ
 			if((CELL_CODE&4)==4){
 				o = new Object();
 				o->init(tm);
-				o->setColor(0,1,1);
+				o->setColor(0,1,0);
 				o->setTransform(glm::translate(glm::mat4(1.0f),glm::vec3(-2*cellWallY,0,-0.5f * cellWallY)) * glm::rotate(wallTranslateStack.top(),glm::radians(90.0f),glm::vec3(0.0f,1.0f,0.0f)) * scaleTransform);
 				objectsList.push_back(o);
 				
@@ -298,7 +317,7 @@ void View3DMaze::createWalls(TriangleMesh &tm,int floorX, int floorY, int floorZ
 				if((CELL_CODE&1)==1){			
 					o = new Object();
 					o->init(tm);
-					o->setColor(1,0,1);
+					o->setColor(0,1,0);
 					o->setTransform(glm::translate(glm::mat4(1.0f),glm::vec3(-2*cellWallY,0,(-cellWallZ)+(0.5f * cellWallY))) * glm::rotate(wallTranslateStack.top(),glm::radians(90.0f),glm::vec3(0.0f,1.0f,0.0f)) * scaleTransform);
 					objectsList.push_back(o);
 				}
@@ -317,42 +336,44 @@ void View3DMaze::createWalls(TriangleMesh &tm,int floorX, int floorY, int floorZ
 
 				}
 			}
-
-			
-
-			
-
 		}
 
 		wallTranslateStack.pop();
 		wallTranslateStack.push(wallTranslateStack.top() * glm::translate(glm::mat4(1.0f),glm::vec3(0,0,-cellWallZ)));
-
-		
-
-
 	}
+}
 
+void View3DMaze::placeMartiniGlass(TriangleMesh &tm, int floorX, int floorY, int floorZ){
 
-	/*
-		If I want to hardcode walls in, follow code below!
+	//int holeIndex = (mazeIndicesWithHoles.size() == 1) ? 0 : rand() % mazeIndicesWithHoles.size();
 	
-	//Left Wall */
-	/*o = new Object();
-	OBJImporter::importFile(tm,string("models/box"),false);
+	const int ROW_COUNT = maze->getRowCount();
+	const int COLUMN_COUNT = maze->getColumnCount();
+
+	float cellWallX = -1.0f * (floorX)/(float)COLUMN_COUNT;
+	float cellWallY = (float)floorY;
+	float cellWallZ = floorZ/(float)ROW_COUNT;
+
+	int holeIndex = rand() % mazeIndicesWithHoles.size();
+
+	int columnNumber = mazeIndicesWithHoles[holeIndex][0];
+	int rowNumber = mazeIndicesWithHoles[holeIndex][1];
+	
+
+	glm::mat4 glassTransform =  glm::translate(glm::mat4(1.0f),glm::vec3(columnNumber*cellWallX,cellWallY*2,-rowNumber*cellWallZ)) * glm::translate(glm::mat4(1.0f),glm::vec3(floorX/2.0f,floorY,floorZ/2.0f)) * glm::scale(glm::mat4(1.0f),glm::vec3(cellWallZ,cellWallZ,cellWallZ));
+
+	Object* o = new Object();
+	OBJImporter::importFile(tm,string("models/martini_glass"),false);
 	o->init(tm);
-	o->setColor(0,0,1);
-	o->setTransform(glm::translate(glm::mat4(1.0f),glm::vec3(floorX/2.0f,floorY,0)) * glm::scale(glm::mat4(1.0f),glm::vec3(floorY,floorY,floorX)));//glm::translate
+	o->setColor(1,0,0);
+	o->setTransform(glassTransform);
 	objectsList.push_back(o);
 
 
-	//Right Wall
-	o = new Object();
-	OBJImporter::importFile(tm,string("models/box"),false);
-	o->init(tm);
-	o->setColor(0,0,1);
-	o->setTransform(glm::translate(glm::mat4(1.0f),glm::vec3(-floorX/2.0f,floorY,0)) * glm::scale(glm::mat4(1.0f),glm::vec3(floorY,floorY,floorX)));//glm::translate
-	objectsList.push_back(o);*/
-	
+
+
+
+
 }
 
 void View3DMaze::draw(){
@@ -361,10 +382,10 @@ void View3DMaze::draw(){
 	while (!modelView.empty())
         modelView.pop();
 
-	glEnable(GL_LINE_SMOOTH);// or GL_POLYGON_SMOOTH 
-	glEnable(GL_BLEND); 
-	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA); ;
-	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST); //GL_FASTEST,GL_DONT_CARE 
+	glEnable(GL_POLYGON_SMOOTH);// or GL_POLYGON_SMOOTH 
+	//glEnable(GL_BLEND); 
+	//glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+	glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST); //GL_FASTEST,GL_DONT_CARE 
 
 	modelView.push(glm::mat4(1.0));
     modelView.top() *= glm::lookAt(
@@ -372,7 +393,7 @@ void View3DMaze::draw(){
 		glm::vec3(0,0,0),
 		glm::vec3(0,1,0));
 
-	modelView.top() *= mazeTransform;
+	
     glUniformMatrix4fv(projectionLocation,1,GL_FALSE,glm::value_ptr(proj.top()));
 
 	if(showWireFrame){
@@ -380,6 +401,8 @@ void View3DMaze::draw(){
 	} else {
 		glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
 	}
+
+	modelView.top() *= mazeTransform;
 
 	for(int i = 0 ; i < objectsList.size(); i++){
 		glm::mat4 transform = objectsList[i]->getTransform();

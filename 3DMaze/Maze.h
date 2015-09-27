@@ -38,6 +38,9 @@ public:
 
 	int getCellLogicAsInteger(const int columnNumber, const int rowNumber) const;
 	void setCellLogicAsInteger(const int columnNumber, const int rowNumber, const int INT_CODE);
+
+
+	int mazeIndexOf(const int columnNumber, const int rowNumber) const;
 	
 	~Maze();
 };
