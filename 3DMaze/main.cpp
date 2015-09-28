@@ -61,7 +61,7 @@ int main(int argc, char *argv[]){
     }
 
 
-	Maze maze("maze-10x20.txt");
+	Maze maze("maze-17x17.txt");
 	pMaze=&maze;
 	initialize();
 

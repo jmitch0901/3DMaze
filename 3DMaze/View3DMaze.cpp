@@ -379,12 +379,16 @@ void View3DMaze::placeMartiniGlass(TriangleMesh &tm, float floorX, float floorY,
 	cout<<"Hole List SIZE: "<<mazeIndicesWithHoles.size()<<endl;
 	cout<<"HOLE INDEX: "<<holeIndex<<endl;
 	cout<<"(COLUMN,ROW): "<<columnNumber<<", "<<rowNumber<<endl;
+
+	float xTranslateFixer = colToRowRatio;
+	float zTranslateFixer = 1.0f;
+
 	
 	//right by .5, down by .5
 	glm::mat4 glassTransform =  
 		glm::translate(glm::mat4(1.0f),glm::vec3(columnNumber*cellWallX + (cellWallX * 0.5f),0,-rowNumber*cellWallZ - (0.5f*cellWallZ))) 
 		* glm::translate(glm::mat4(1.0f),glm::vec3(floorX/2.0f,floorY+floorY*1.0f/2.0f,floorZ/2.0f)) 
-		* glm::scale(glm::mat4(1.0f),glm::vec3(cellWallZ-cellWallThickness,cellWallZ-cellWallThickness,cellWallZ-cellWallThickness));
+		* glm::scale(glm::mat4(1.0f),glm::vec3(cellWallZ-cellWallThickness/colToRowRatio,cellWallZ-cellWallThickness/colToRowRatio,cellWallZ-cellWallThickness/colToRowRatio));
 
 	Object* o = new Object();
 	OBJImporter::importFile(tm,string("models/martini_glass"),false);
