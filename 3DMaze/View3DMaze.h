@@ -46,8 +46,8 @@ private:
 
 	vector<vector<int> > mazeIndicesWithHoles;
 
-	void createWallsAndFindHoles(TriangleMesh &tm,int floorX, int floorY, int floorZ);
-	void placeMartiniGlass(TriangleMesh &tm,int floorX, int floorY, int floorZ);
+	void createWallsAndFindHoles(TriangleMesh &tm,float floorX, float floorY, float floorZ);
+	void placeMartiniGlass(TriangleMesh &tm,float floorX, float floorY, float floorZ);
 	
 
 public:

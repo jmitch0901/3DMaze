@@ -209,9 +209,9 @@ void View3DMaze::initialize(Maze* maze){
 	Object *o;
 	TriangleMesh tm;
 
-	int floorX = 200;
-	int floorY = 5;
-	int floorZ = 200;
+	float floorX = 200.0f;
+	float floorY = 5.0f;
+	float floorZ = 200.0f;
 
 	//Sets just the floor
 	o = new Object();
@@ -232,7 +232,7 @@ void View3DMaze::initialize(Maze* maze){
 	
 }
 
-void View3DMaze::createWallsAndFindHoles(TriangleMesh &tm,int floorX, int floorY, int floorZ){
+void View3DMaze::createWallsAndFindHoles(TriangleMesh &tm,float floorX, float floorY, float floorZ){
 
 	Object *o;
 	
@@ -245,13 +245,14 @@ void View3DMaze::createWallsAndFindHoles(TriangleMesh &tm,int floorX, int floorY
 	const int ROW_COUNT = maze->getRowCount();
 	const int COLUMN_COUNT = maze->getColumnCount();
 
-	float cellWallX = -1.0f * (floorX)/(float)COLUMN_COUNT;
+	float cellWallX = -1.0f* (floorX)/(float)COLUMN_COUNT;
 	float cellWallY = (float)floorY;
 	float cellWallZ = floorZ/(float)ROW_COUNT;
 
-	const glm::mat4 scaleTransform 
-		= glm::scale(glm::mat4(1.0f),glm::vec3(floorY,floorY,cellWallZ));
+	float cellWallThickness = -1.0f * cellWallX/10.0f;
 
+	const glm::mat4 scaleTransform 
+		= glm::scale(glm::mat4(1.0f),glm::vec3(cellWallThickness,floorY,cellWallZ));
 
 
 	stack<glm::mat4> wallTranslateStack;
@@ -268,6 +269,8 @@ void View3DMaze::createWallsAndFindHoles(TriangleMesh &tm,int floorX, int floorY
 
 			const int CELL_CODE = maze->getCellLogicAsInteger(j,i);
 
+
+			//Used later to determine where to place the martini glass
 			if(CELL_CODE == 0){
 				vector<int> v;
 				v.push_back(j);
@@ -279,7 +282,6 @@ void View3DMaze::createWallsAndFindHoles(TriangleMesh &tm,int floorX, int floorY
 			if(j==0){
 				wallTranslateStack.push(wallTranslateStack.top());
 			} else {
-
 				wallTranslateStack.top() *= glm::translate(glm::mat4(1.0f),glm::vec3(cellWallX,0,0));
 			}
 			
@@ -288,7 +290,8 @@ void View3DMaze::createWallsAndFindHoles(TriangleMesh &tm,int floorX, int floorY
 				o = new Object();
 				o->init(tm);
 				o->setColor(0,1,0);
-				o->setTransform(glm::translate(glm::mat4(1.0f),glm::vec3(-0.5f * cellWallY,0,-2*cellWallY)) * wallTranslateStack.top() * scaleTransform);
+				o->setTransform(glm::translate(glm::mat4(1.0f),glm::vec3(-0.5f * cellWallThickness,0,-5.0f * cellWallThickness)) * wallTranslateStack.top() * scaleTransform);
+				//o->setTransform(wallTranslateStack.top() * scaleTransform);
 				objectsList.push_back(o);
 			}
 
@@ -299,7 +302,8 @@ void View3DMaze::createWallsAndFindHoles(TriangleMesh &tm,int floorX, int floorY
 				o = new Object();
 				o->init(tm);
 				o->setColor(0,1,0);
-				o->setTransform(glm::translate(glm::mat4(1.0f),glm::vec3(-2*cellWallY,0,-0.5f * cellWallY)) * glm::rotate(wallTranslateStack.top(),glm::radians(90.0f),glm::vec3(0.0f,1.0f,0.0f)) * scaleTransform);
+				//o->setTransform(glm::translate(glm::mat4(1.0f),glm::vec3(-2*cellWallY,0,-0.5f * cellWallY)) * glm::rotate(wallTranslateStack.top(),glm::radians(90.0f),glm::vec3(0.0f,1.0f,0.0f)) * scaleTransform);
+				o->setTransform(glm::translate(glm::mat4(1.0f),glm::vec3(-5.0f*cellWallThickness,0,-0.5f * cellWallThickness)) * glm::rotate(wallTranslateStack.top(),glm::radians(90.0f),glm::vec3(0.0f,1.0f,0.0f)) * scaleTransform);
 				objectsList.push_back(o);
 				
 			}
@@ -311,7 +315,7 @@ void View3DMaze::createWallsAndFindHoles(TriangleMesh &tm,int floorX, int floorY
 					o = new Object();
 					o->init(tm);
 					o->setColor(0,1,0);
-					o->setTransform(glm::translate(glm::mat4(1.0f),glm::vec3(-2*cellWallY,0,(-cellWallZ)+(0.5f * cellWallY))) * glm::rotate(wallTranslateStack.top(),glm::radians(90.0f),glm::vec3(0.0f,1.0f,0.0f)) * scaleTransform);
+					o->setTransform(glm::translate(glm::mat4(1.0f),glm::vec3(-5.0*cellWallThickness,0,(-cellWallZ)+(0.5f * cellWallThickness))) * glm::rotate(wallTranslateStack.top(),glm::radians(90.0f),glm::vec3(0.0f,1.0f,0.0f)) * scaleTransform);
 					objectsList.push_back(o);
 				}
 			}
@@ -324,7 +328,7 @@ void View3DMaze::createWallsAndFindHoles(TriangleMesh &tm,int floorX, int floorY
 					o->init(tm);
 					o->setColor(0,1,0);
 					wallTranslateStack.top() *= glm::translate(glm::mat4(1.0f),glm::vec3(cellWallX,0,0));
-					o->setTransform(glm::translate(glm::mat4(1.0f),glm::vec3(0.5f * cellWallY,0,-2*cellWallY)) *  wallTranslateStack.top() * scaleTransform);
+					o->setTransform(glm::translate(glm::mat4(1.0f),glm::vec3(0.5f * cellWallThickness,0,-5.0*cellWallThickness)) *  wallTranslateStack.top() * scaleTransform);
 					objectsList.push_back(o);
 
 				}
@@ -336,7 +340,7 @@ void View3DMaze::createWallsAndFindHoles(TriangleMesh &tm,int floorX, int floorY
 	}
 }
 
-void View3DMaze::placeMartiniGlass(TriangleMesh &tm, int floorX, int floorY, int floorZ){
+void View3DMaze::placeMartiniGlass(TriangleMesh &tm, float floorX, float floorY, float floorZ){
 
 	//int holeIndex = (mazeIndicesWithHoles.size() == 1) ? 0 : rand() % mazeIndicesWithHoles.size();
 	
@@ -349,6 +353,8 @@ void View3DMaze::placeMartiniGlass(TriangleMesh &tm, int floorX, int floorY, int
 	float cellWallY = (float)floorY;
 	float cellWallZ = floorZ/(float)ROW_COUNT;
 
+	float cellWallThickness = -1.0f * cellWallX/10.0f;
+
 	int holeIndex = std::rand() % mazeIndicesWithHoles.size();
 
 	int columnNumber = mazeIndicesWithHoles[holeIndex][0];
@@ -359,7 +365,10 @@ void View3DMaze::placeMartiniGlass(TriangleMesh &tm, int floorX, int floorY, int
 	cout<<"(COLUMN,ROW): "<<columnNumber<<", "<<rowNumber<<endl;
 	
 	//right by .5, down by .5
-	glm::mat4 glassTransform =  glm::translate(glm::mat4(1.0f),glm::vec3(columnNumber*cellWallX + (cellWallX * 0.5f),cellWallY*2,-rowNumber*cellWallZ - (0.5f*cellWallZ))) * glm::translate(glm::mat4(1.0f),glm::vec3(floorX/2.0f,floorY,floorZ/2.0f)) * glm::scale(glm::mat4(1.0f),glm::vec3(cellWallZ,cellWallZ,cellWallZ));
+	glm::mat4 glassTransform =  
+		glm::translate(glm::mat4(1.0f),glm::vec3(columnNumber*cellWallX + (cellWallX * 0.5f),cellWallThickness*5.0f,-rowNumber*cellWallZ - (0.5f*cellWallZ))) 
+		* glm::translate(glm::mat4(1.0f),glm::vec3(floorX/2.0f,floorY,floorZ/2.0f)) 
+		* glm::scale(glm::mat4(1.0f),glm::vec3(cellWallZ-cellWallThickness,cellWallZ-cellWallThickness,cellWallZ-cellWallThickness));
 
 	Object* o = new Object();
 	OBJImporter::importFile(tm,string("models/martini_glass"),false);
