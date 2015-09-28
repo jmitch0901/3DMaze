@@ -209,9 +209,11 @@ void View3DMaze::initialize(Maze* maze){
 	Object *o;
 	TriangleMesh tm;
 
-	float floorX = 200.0f;
+	colToRowRatio = maze->getColumnCount()/(float)maze->getRowCount();
+
+	float floorX = 150.0f*colToRowRatio;
 	float floorY = 5.0f;
-	float floorZ = 200.0f;
+	float floorZ = 150.0f/colToRowRatio;
 
 	//Sets just the floor
 	o = new Object();
@@ -235,9 +237,6 @@ void View3DMaze::initialize(Maze* maze){
 void View3DMaze::createWallsAndFindHoles(TriangleMesh &tm,float floorX, float floorY, float floorZ){
 
 	Object *o;
-	
-	//TriangleMesh tm;
-
 
 	//The stack so we can reference a previous transformed box.
 	
@@ -251,8 +250,25 @@ void View3DMaze::createWallsAndFindHoles(TriangleMesh &tm,float floorX, float fl
 
 	float cellWallThickness = -1.0f * cellWallX/10.0f;
 
-	const glm::mat4 scaleTransform 
+	//We initialize assuming that the maze is square, or there are more rows than columns. The math will work either way.
+	glm::mat4 xScaleTransform 
+		= glm::scale(glm::mat4(1.0f),glm::vec3(cellWallThickness,floorY,cellWallZ*colToRowRatio));
+
+	glm::mat4 zScaleTransform 
 		= glm::scale(glm::mat4(1.0f),glm::vec3(cellWallThickness,floorY,cellWallZ));
+
+	float xTranslateFixer = colToRowRatio;
+	float zTranslateFixer = 1.0f;
+
+	//If there are more columns than rows, that we need to reverse the scaling transforms...
+	if(COLUMN_COUNT>ROW_COUNT){
+		xScaleTransform 
+			= glm::scale(glm::mat4(1.0f),glm::vec3(cellWallThickness,floorY,cellWallZ*colToRowRatio));
+
+		zScaleTransform 
+			= glm::scale(glm::mat4(1.0f),glm::vec3(cellWallThickness,floorY,cellWallZ));
+
+	}
 
 
 	stack<glm::mat4> wallTranslateStack;
@@ -290,7 +306,7 @@ void View3DMaze::createWallsAndFindHoles(TriangleMesh &tm,float floorX, float fl
 				o = new Object();
 				o->init(tm);
 				o->setColor(0,1,0);
-				o->setTransform(glm::translate(glm::mat4(1.0f),glm::vec3(-0.5f * cellWallThickness,0,-5.0f * cellWallThickness)) * wallTranslateStack.top() * scaleTransform);
+				o->setTransform(glm::translate(glm::mat4(1.0f),glm::vec3(-0.5f * cellWallThickness,0,-5.0f * cellWallThickness * (1.0f/colToRowRatio))) * wallTranslateStack.top() * zScaleTransform);
 				//o->setTransform(wallTranslateStack.top() * scaleTransform);
 				objectsList.push_back(o);
 			}
@@ -303,7 +319,7 @@ void View3DMaze::createWallsAndFindHoles(TriangleMesh &tm,float floorX, float fl
 				o->init(tm);
 				o->setColor(0,1,0);
 				//o->setTransform(glm::translate(glm::mat4(1.0f),glm::vec3(-2*cellWallY,0,-0.5f * cellWallY)) * glm::rotate(wallTranslateStack.top(),glm::radians(90.0f),glm::vec3(0.0f,1.0f,0.0f)) * scaleTransform);
-				o->setTransform(glm::translate(glm::mat4(1.0f),glm::vec3(-5.0f*cellWallThickness,0,-0.5f * cellWallThickness)) * glm::rotate(wallTranslateStack.top(),glm::radians(90.0f),glm::vec3(0.0f,1.0f,0.0f)) * scaleTransform);
+				o->setTransform(glm::translate(glm::mat4(1.0f),glm::vec3(-5.0f*cellWallThickness,0,-0.5f * cellWallThickness)) * glm::rotate(wallTranslateStack.top(),glm::radians(90.0f),glm::vec3(0.0f,1.0f,0.0f)) * xScaleTransform);
 				objectsList.push_back(o);
 				
 			}
@@ -315,7 +331,7 @@ void View3DMaze::createWallsAndFindHoles(TriangleMesh &tm,float floorX, float fl
 					o = new Object();
 					o->init(tm);
 					o->setColor(0,1,0);
-					o->setTransform(glm::translate(glm::mat4(1.0f),glm::vec3(-5.0*cellWallThickness,0,(-cellWallZ)+(0.5f * cellWallThickness))) * glm::rotate(wallTranslateStack.top(),glm::radians(90.0f),glm::vec3(0.0f,1.0f,0.0f)) * scaleTransform);
+					o->setTransform(glm::translate(glm::mat4(1.0f),glm::vec3(-5.0*cellWallThickness,0,(-cellWallZ)+(0.5f * cellWallThickness))) * glm::rotate(wallTranslateStack.top(),glm::radians(90.0f),glm::vec3(0.0f,1.0f,0.0f)) * xScaleTransform);
 					objectsList.push_back(o);
 				}
 			}
@@ -328,7 +344,7 @@ void View3DMaze::createWallsAndFindHoles(TriangleMesh &tm,float floorX, float fl
 					o->init(tm);
 					o->setColor(0,1,0);
 					wallTranslateStack.top() *= glm::translate(glm::mat4(1.0f),glm::vec3(cellWallX,0,0));
-					o->setTransform(glm::translate(glm::mat4(1.0f),glm::vec3(0.5f * cellWallThickness,0,-5.0*cellWallThickness)) *  wallTranslateStack.top() * scaleTransform);
+					o->setTransform(glm::translate(glm::mat4(1.0f),glm::vec3(0.5f * cellWallThickness,0,-5.0*cellWallThickness*(1.0f/colToRowRatio))) *  wallTranslateStack.top() * zScaleTransform);
 					objectsList.push_back(o);
 
 				}
@@ -366,8 +382,8 @@ void View3DMaze::placeMartiniGlass(TriangleMesh &tm, float floorX, float floorY,
 	
 	//right by .5, down by .5
 	glm::mat4 glassTransform =  
-		glm::translate(glm::mat4(1.0f),glm::vec3(columnNumber*cellWallX + (cellWallX * 0.5f),cellWallThickness*5.0f,-rowNumber*cellWallZ - (0.5f*cellWallZ))) 
-		* glm::translate(glm::mat4(1.0f),glm::vec3(floorX/2.0f,floorY,floorZ/2.0f)) 
+		glm::translate(glm::mat4(1.0f),glm::vec3(columnNumber*cellWallX + (cellWallX * 0.5f),0,-rowNumber*cellWallZ - (0.5f*cellWallZ))) 
+		* glm::translate(glm::mat4(1.0f),glm::vec3(floorX/2.0f,floorY+floorY*1.0f/2.0f,floorZ/2.0f)) 
 		* glm::scale(glm::mat4(1.0f),glm::vec3(cellWallZ-cellWallThickness,cellWallZ-cellWallThickness,cellWallZ-cellWallThickness));
 
 	Object* o = new Object();
@@ -390,10 +406,10 @@ void View3DMaze::draw(){
 	while (!modelView.empty())
         modelView.pop();
 
-	glEnable(GL_POLYGON_SMOOTH);// or GL_POLYGON_SMOOTH 
-	//glEnable(GL_BLEND); 
-	//glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-	glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST); //GL_FASTEST,GL_DONT_CARE 
+	/*glEnable(GL_POLYGON_SMOOTH);// or GL_POLYGON_SMOOTH 
+	glEnable(GL_BLEND); 
+	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+	glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST); //GL_FASTEST,GL_DONT_CARE */
 
 	modelView.push(glm::mat4(1.0));
     modelView.top() *= glm::lookAt(
