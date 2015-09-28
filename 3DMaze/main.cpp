@@ -103,7 +103,8 @@ void processEvent(sf::Event event,sf::RenderWindow& window)
 	if (event.type == sf::Event::Resized)
 		resize(event.size.width, event.size.height);
 
-	if(sf::Keyboard::isKeyPressed(sf::Keyboard::W)){
+	if(sf::Keyboard::isKeyPressed(sf::Keyboard::W) && event.key.code == sf::Keyboard::W){
+		cout<<"w pressed"<<endl;
 		showWireFrame = (!showWireFrame);
 		v.setShowWireFrame(showWireFrame);
 	}

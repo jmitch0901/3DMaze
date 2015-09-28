@@ -26,8 +26,9 @@ class View3DMaze{
 private:
 	int WINDOW_WIDTH, WINDOW_HEIGHT;
 	float aspectRatio;
-
 	float colToRowRatio;
+
+	float mazeRotatedWeight;
 
 	bool showWireFrame;
 	int startX, startY, lastX, lastY;

@@ -16,7 +16,7 @@ using namespace std;
 View3DMaze::View3DMaze(){
 	mazeTransform = glm::mat4(1.0f);
 	showWireFrame = false;
-
+	mazeRotatedWeight = 0.0f;
 }
 
 View3DMaze::~View3DMaze(){
@@ -133,45 +133,55 @@ void View3DMaze::onMousePressed(const int mouseX, const int mouseY){
 
 void View3DMaze::onMouseMoved(const int mouseX, const int mouseY){
 
-	bool isStartXBig = false;
+	/*bool isStartXBig = false;
 	bool isStartYBig = false;
 
 	int bigX = (isStartXBig = (startX>=mouseX)) ? startX : mouseX;
 	int bigY = (isStartYBig = (startY>=mouseY)) ? startY : mouseY;
 
 	int smallX = isStartXBig ? mouseX : startX;
-	int smallY = isStartYBig ? mouseY : startY;
+	int smallY = isStartYBig ? mouseY : startY;*/
 
-	float x = smallY/(float)bigY;
+	/*float x = smallY/(float)bigY;
 	float y = smallX/(float)bigX;
-	float z = 0.0f;
+	float z = 0.0f;*/
 
+	float x = 1.0f;
+	float y = 1.0f;
+	float z = 0.0f;
 	float theta = 0.04f;
 
-	if(mouseX < lastX)
-		y*=-1.0f;
-	if(mouseY > lastY)
-		x*=-1.0f;
 
-
-	//Determines which mouse direction is dominant.
-	if(abs(mouseX - startX) > abs(mouseY - startY)){
+	//Determines which mouse direction you're dragging is dominant.
+	if(abs(mouseX - lastX) > abs(mouseY - lastY)){
 		x = 0.0f;
 	} else {
 		y = 0.0f;
 	}
 
-	//cout<<"start x: "<<startX<<", mouseX: "<<mouseX<<endl;
+	//We need some way of keep track how many degrees we've rotated.
+	if(x!=0.0f && mouseX < lastX){
+		x*=-1.0f;
+		mazeRotatedWeight+=theta/360.0f;
+	} else if(x != 0.0f){	
+		mazeRotatedWeight-=theta/360.0f;
+	}
 
-	/*float x,y;
-	float z = 1.0f;
-	float theta = 1.0f;
 
-	x = mouseX / startX;
-	y = mouseY / startY;*/
+	//Corr
+	if(mazeRotatedWeight >= 1.0f){
+		mazeRotatedWeight -= 1.0f;
+	} else if (mazeRotatedWeight <= 0.0f){
+		mazeRotatedWeight += 1.0f;
+	}
 
-	//Check to see whether or not you are dragging the mouse back
+	if(mazeRotatedWeight >=.25f && mazeRotatedWeight <= .50f){
+		//z = 1.0f;		
+	} else if (mazeRotatedWeight >= .75f && mazeRotatedWeight <= 1.0f){
+		//z = -1.0f;		
+	}
 
+	
 	mazeTransform = glm::rotate(
 		mazeTransform,
 		theta,
