@@ -52,7 +52,7 @@ else {
 }
 
 Maze::~Maze(){
-	cout<<"Deconstructing Maze Object!"<<endl;
+	//cout<<"Deconstructing Maze Object!"<<endl;
 }
 
 int Maze::getCellLogicAsInteger(const int columnNumber, const int rowNumber) const{

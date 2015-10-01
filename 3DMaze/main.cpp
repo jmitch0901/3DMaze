@@ -109,17 +109,20 @@ void processEvent(sf::Event event,sf::RenderWindow& window)
 		v.setShowWireFrame(showWireFrame);
 	}
 
-	if(event.mouseButton.button == sf::Mouse::Left && event.type == sf::Event::MouseButtonPressed){
+	
+
+	if(mouseIsPressed && !sf::Mouse::isButtonPressed(sf::Mouse::Left)){
+		cout<<"Mouse Released"<<endl;
+		mouseIsPressed=false;
+	}
+
+	if(sf::Mouse::isButtonPressed(sf::Mouse::Left) && !mouseIsPressed){
+		
 		cout<<"Mouse Pressed "<<endl;
 		mouseIsPressed=true;
 		mouseX = sf::Mouse::getPosition(window).x;
 		mouseY = window.getSize().y -  sf::Mouse::getPosition(window).y;
 		v.onMousePressed(mouseX, mouseY);
-	}
-
-	if(event.mouseButton.button == sf::Mouse::Left && event.type == sf::Event::MouseButtonReleased){
-		cout<<"Mouse Released"<<endl;
-		mouseIsPressed=false;
 	}
 
 	if(mouseIsPressed && event.type == sf::Event::MouseMoved){
