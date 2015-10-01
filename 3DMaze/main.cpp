@@ -125,7 +125,7 @@ void processEvent(sf::Event event,sf::RenderWindow& window)
 		v.onMousePressed(mouseX, mouseY);
 	}
 
-	if(mouseIsPressed && event.type == sf::Event::MouseMoved){
+	if(sf::Mouse::isButtonPressed(sf::Mouse::Left)){
 		mouseX = sf::Mouse::getPosition(window).x;
 		mouseY = window.getSize().y - sf::Mouse::getPosition(window).y;
 
