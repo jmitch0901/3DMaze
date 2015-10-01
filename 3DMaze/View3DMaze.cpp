@@ -133,18 +133,6 @@ void View3DMaze::onMousePressed(const int mouseX, const int mouseY){
 
 void View3DMaze::onMouseMoved(const int mouseX, const int mouseY){
 
-	/*bool isStartXBig = false;
-	bool isStartYBig = false;
-
-	int bigX = (isStartXBig = (startX>=mouseX)) ? startX : mouseX;
-	int bigY = (isStartYBig = (startY>=mouseY)) ? startY : mouseY;
-
-	int smallX = isStartXBig ? mouseX : startX;
-	int smallY = isStartYBig ? mouseY : startY;*/
-
-	/*float x = smallY/(float)bigY;
-	float y = smallX/(float)bigX;
-	float z = 0.0f;*/
 
 	float x = 1.0f;
 	float y = 1.0f;
@@ -159,29 +147,11 @@ void View3DMaze::onMouseMoved(const int mouseX, const int mouseY){
 		y = 0.0f;
 	}
 
-	//We need some way of keep track how many degrees we've rotated.
-	if(x!=0.0f && mouseX < lastX){
-		x*=-1.0f;
-		mazeRotatedWeight+=theta/360.0f;
-	} else if(x != 0.0f){	
-		mazeRotatedWeight-=theta/360.0f;
-	}
+	if(mouseX < lastX)
+		y*=-1;
+	if(mouseY < lastY)
+		x*=-1;
 
-
-	//Corr
-	if(mazeRotatedWeight >= 1.0f){
-		mazeRotatedWeight -= 1.0f;
-	} else if (mazeRotatedWeight <= 0.0f){
-		mazeRotatedWeight += 1.0f;
-	}
-
-	if(mazeRotatedWeight >=.25f && mazeRotatedWeight <= .50f){
-		//z = 1.0f;		
-	} else if (mazeRotatedWeight >= .75f && mazeRotatedWeight <= 1.0f){
-		//z = -1.0f;		
-	}
-
-	
 	mazeTransform = glm::rotate(
 		mazeTransform,
 		theta,
