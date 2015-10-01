@@ -61,6 +61,10 @@ int Maze::getCellLogicAsInteger(const int columnNumber, const int rowNumber) con
 
 }
 
+int Maze::mazeIndexOf(const int columnNumber, const int rowNumber) const{
+	return rowNumber*numColumns+columnNumber;
+}
+
 
 void Maze::setCellLogicAsInteger(const int columnNumber, const int rowNumber, const int INT_CODE){
 	int index = rowNumber*numColumns+columnNumber;

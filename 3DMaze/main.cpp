@@ -20,6 +20,7 @@ int frames;
 double frame_rate;
 int mouseX, mouseY;
 bool mouseIsPressed = false;
+bool showWireFrame = false;
 
 View3DMaze v;
 sf::RenderWindow* renderWindow;
@@ -60,7 +61,7 @@ int main(int argc, char *argv[]){
     }
 
 
-	Maze maze("maze-10x10.txt");
+	Maze maze("maze-17x17.txt");
 	pMaze=&maze;
 	initialize();
 
@@ -102,6 +103,11 @@ void processEvent(sf::Event event,sf::RenderWindow& window)
 	if (event.type == sf::Event::Resized)
 		resize(event.size.width, event.size.height);
 
+	if(sf::Keyboard::isKeyPressed(sf::Keyboard::W) && event.key.code == sf::Keyboard::W){
+		cout<<"w pressed"<<endl;
+		showWireFrame = (!showWireFrame);
+		v.setShowWireFrame(showWireFrame);
+	}
 
 	if(event.mouseButton.button == sf::Mouse::Left && event.type == sf::Event::MouseButtonPressed){
 		cout<<"Mouse Pressed "<<endl;
@@ -114,10 +120,7 @@ void processEvent(sf::Event event,sf::RenderWindow& window)
 	if(event.mouseButton.button == sf::Mouse::Left && event.type == sf::Event::MouseButtonReleased){
 		cout<<"Mouse Released"<<endl;
 		mouseIsPressed=false;
-
 	}
-
-	
 
 	if(mouseIsPressed && event.type == sf::Event::MouseMoved){
 		mouseX = sf::Mouse::getPosition(window).x;
@@ -126,6 +129,8 @@ void processEvent(sf::Event event,sf::RenderWindow& window)
 		//v.onMouseMoved(mouseX,sf::Mouse::getPosition(window).y);
 		v.onMouseMoved(mouseX,mouseY);
 	}
+
+	
 }
 
 void drawText(sf::RenderWindow *window,string text,int x,int y)

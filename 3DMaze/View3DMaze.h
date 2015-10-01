@@ -10,6 +10,8 @@
 using namespace std;
 
 
+
+
 class View3DMaze{
 	#define BUFFER_OFFSET(offset) ((void *)(offset))
 
@@ -24,13 +26,18 @@ class View3DMaze{
 private:
 	int WINDOW_WIDTH, WINDOW_HEIGHT;
 	float aspectRatio;
+	float colToRowRatio;
 
+	float mazeRotatedWeight;
+
+	bool showWireFrame;
 	int startX, startY, lastX, lastY;
 
 	GLuint programID;
 
 	vector<Object *> objectsList;
-	stack<glm::mat4> proj, modelView;
+	stack<glm::mat4> proj, 
+		modelView;
 
 	glm::mat4 mazeTransform;
 
@@ -40,6 +47,12 @@ private:
 
 	Maze *maze;
 
+	vector<vector<int> > mazeIndicesWithHoles;
+
+	void createWallsAndFindHoles(TriangleMesh &tm,float floorX, float floorY, float floorZ);
+	void placeMartiniGlass(TriangleMesh &tm,float floorX, float floorY, float floorZ);
+	
+
 public:
 	View3DMaze();
 	~View3DMaze();
@@ -48,6 +61,7 @@ public:
 
 	void onMousePressed(const int mouseX, const int mouseY);
 	void onMouseMoved(const int mouseX, const int mouseY);
+	void setShowWireFrame(bool showWireFrame);
 
 	void resize(int w, int h);
 	void draw();

@@ -7,6 +7,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <cmath>
+#include <time.h>
 /*
 	Jonathan Mitchell
 */
@@ -14,7 +15,8 @@ using namespace std;
 
 View3DMaze::View3DMaze(){
 	mazeTransform = glm::mat4(1.0f);
-
+	showWireFrame = false;
+	mazeRotatedWeight = 0.0f;
 }
 
 View3DMaze::~View3DMaze(){
@@ -35,7 +37,7 @@ void View3DMaze::resize(int w, int h){
 		proj.pop();
 	}
 
-	proj.push(glm::ortho(-200.0f,200.0f,-200.0f*WINDOW_HEIGHT/WINDOW_WIDTH,200.0f*WINDOW_HEIGHT/WINDOW_WIDTH,0.1f,10000.0f));
+	proj.push(glm::ortho(-200.0f,200.0f,-200.0f*WINDOW_HEIGHT/WINDOW_WIDTH,200.0f*WINDOW_HEIGHT/WINDOW_WIDTH,-1000.0f,1000.0f));
 }
 
 GLuint View3DMaze::linkShadersToGPU(ShaderInfo* shaders){
@@ -124,6 +126,47 @@ void View3DMaze::printShaderInfoToLog(GLuint shader){
     }
 }
 
+void View3DMaze::onMousePressed(const int mouseX, const int mouseY){
+	lastX = startX = mouseX;
+	lastY = startY = mouseY;
+}
+
+void View3DMaze::onMouseMoved(const int mouseX, const int mouseY){
+
+
+	float x = 1.0f;
+	float y = 1.0f;
+	float z = 0.0f;
+	float theta = 0.04f;
+
+
+	//Determines which mouse direction you're dragging is dominant.
+	if(abs(mouseX - lastX) > abs(mouseY - lastY)){
+		x = 0.0f;
+	} else {
+		y = 0.0f;
+	}
+
+	if(mouseX < lastX)
+		y*=-1;
+	if(mouseY < lastY)
+		x*=-1;
+
+	mazeTransform = glm::rotate(
+		mazeTransform,
+		theta,
+		glm::vec3(x,y,z)
+		);
+
+	lastX = mouseX;
+	lastY = mouseY;
+
+}
+
+void View3DMaze::setShowWireFrame(bool showWireFrame){
+	this->showWireFrame = showWireFrame;
+}
+
 void View3DMaze::initialize(Maze* maze){
 	this->maze = maze;
 
@@ -146,72 +189,198 @@ void View3DMaze::initialize(Maze* maze){
 	Object *o;
 	TriangleMesh tm;
 
+	colToRowRatio = maze->getColumnCount()/(float)maze->getRowCount();
+
+	float floorX = 150.0f*colToRowRatio;
+	float floorY = 5.0f;
+	float floorZ = 150.0f/colToRowRatio;
+
+	//Sets just the floor
 	o = new Object();
 	OBJImporter::importFile(tm,string("models/box"),false);
 	o->init(tm);
 	o->setColor(0,0,0);
-	o->setTransform(glm::translate(glm::mat4(1.0),glm::vec3(0,50.0f,0)) * glm::scale(glm::mat4(1.0),glm::vec3(150,5,150)));
+	o->setTransform(glm::scale(glm::mat4(1.0),glm::vec3(floorX,floorY,floorZ)));
 	objectsList.push_back(o);
-	
+
+	createWallsAndFindHoles(tm,floorX,floorY,floorZ);
+	if(mazeIndicesWithHoles.empty()){
+		cout<<"There are no holes in this maze! Cannot create mesh object!"<<endl;
+	} else {
+		placeMartiniGlass(tm,floorX,floorY,floorZ);
+	}
+
 	glUseProgram(0);
 	
 }
 
+void View3DMaze::createWallsAndFindHoles(TriangleMesh &tm,float floorX, float floorY, float floorZ){
 
-void View3DMaze::onMousePressed(const int mouseX, const int mouseY){
-	lastX = startX = mouseX;
-	lastY = startY = mouseY;
-}
+	Object *o;
 
-void View3DMaze::onMouseMoved(const int mouseX, const int mouseY){
+	//The stack so we can reference a previous transformed box.
+	
 
-	bool isStartXBig = false;
-	bool isStartYBig = false;
+	const int ROW_COUNT = maze->getRowCount();
+	const int COLUMN_COUNT = maze->getColumnCount();
 
-	int bigX = (isStartXBig = (startX>=mouseX)) ? startX : mouseX;
-	int bigY = (isStartYBig = (startY>=mouseY)) ? startY : mouseY;
+	float cellWallX = -1.0f* (floorX)/(float)COLUMN_COUNT;
+	float cellWallY = (float)floorY;
+	float cellWallZ = floorZ/(float)ROW_COUNT;
 
-	int smallX = isStartXBig ? mouseX : startX;
-	int smallY = isStartYBig ? mouseY : startY;
+	float cellWallThickness = -1.0f * cellWallX/10.0f;
 
-	float x = smallY/(float)bigY;
-	float y = smallX/(float)bigX;
-	float z = 0.0f;
+	//We initialize assuming that the maze is square, or there are more rows than columns. The math will work either way.
+	glm::mat4 xScaleTransform 
+		= glm::scale(glm::mat4(1.0f),glm::vec3(cellWallThickness,floorY,cellWallZ*colToRowRatio));
 
-	float theta = 0.04f;
+	glm::mat4 zScaleTransform 
+		= glm::scale(glm::mat4(1.0f),glm::vec3(cellWallThickness,floorY,cellWallZ));
 
-	if(mouseX > lastX)
-		y*=-1.0f;
-	if(mouseY > lastY)
-		x*=-1.0f;
+	float xTranslateFixer = colToRowRatio;
+	float zTranslateFixer = 1.0f;
 
+	//If there are more columns than rows, that we need to reverse the scaling transforms...
+	if(COLUMN_COUNT>ROW_COUNT){
+		xScaleTransform 
+			= glm::scale(glm::mat4(1.0f),glm::vec3(cellWallThickness,floorY,cellWallZ*colToRowRatio));
 
-	//Determines which mouse direction is dominant.
-	if(abs(mouseX - startX) > abs(mouseY - startY)){
-		x = 0.0f;
-	} else {
-		y = 0.0f;
+		zScaleTransform 
+			= glm::scale(glm::mat4(1.0f),glm::vec3(cellWallThickness,floorY,cellWallZ));
+
 	}
 
-	//cout<<"start x: "<<startX<<", mouseX: "<<mouseX<<endl;
 
-	/*float x,y;
-	float z = 1.0f;
-	float theta = 1.0f;
+	stack<glm::mat4> wallTranslateStack;
 
-	x = mouseX / startX;
-	y = mouseY / startY;*/
+	//For the ROWS
+	wallTranslateStack.push(glm::mat4(1.0f));
 
-	//Check to see whether or not you are dragging the mouse back
+	//For COLUMNS
+	wallTranslateStack.push(glm::translate(glm::mat4(1.0f),glm::vec3(floorX/2.0f,floorY,floorZ/2.0f)));
 
-	mazeTransform = glm::rotate(
-		mazeTransform,
-		theta,
-		glm::vec3(x,y,z)
-		);
+	for(int i = 0; i < ROW_COUNT; i++){
 
-	lastX = mouseX;
-	lastY = mouseY;
+		for(int j = 0; j < COLUMN_COUNT; j++){
+
+			const int CELL_CODE = maze->getCellLogicAsInteger(j,i);
+
+
+			//Used later to determine where to place the martini glass
+			if(CELL_CODE == 0){
+				vector<int> v;
+				v.push_back(j);
+				v.push_back(i);
+				
+				mazeIndicesWithHoles.push_back(v);			
+			}
+
+			if(j==0){
+				wallTranslateStack.push(wallTranslateStack.top());
+			} else {
+				wallTranslateStack.top() *= glm::translate(glm::mat4(1.0f),glm::vec3(cellWallX,0,0));
+			}
+			
+			//Left Wall
+			if((CELL_CODE&8)==8){
+				o = new Object();
+				o->init(tm);
+				o->setColor(0,1,0);
+				o->setTransform(glm::translate(glm::mat4(1.0f),glm::vec3(-0.5f * cellWallThickness,0,-5.0f * cellWallThickness * (1.0f/colToRowRatio))) * wallTranslateStack.top() * zScaleTransform);
+				//o->setTransform(wallTranslateStack.top() * scaleTransform);
+				objectsList.push_back(o);
+			}
+
+		
+
+			//Top Wall
+			if((CELL_CODE&4)==4){
+				o = new Object();
+				o->init(tm);
+				o->setColor(0,1,0);
+				//o->setTransform(glm::translate(glm::mat4(1.0f),glm::vec3(-2*cellWallY,0,-0.5f * cellWallY)) * glm::rotate(wallTranslateStack.top(),glm::radians(90.0f),glm::vec3(0.0f,1.0f,0.0f)) * scaleTransform);
+				o->setTransform(glm::translate(glm::mat4(1.0f),glm::vec3(-5.0f*cellWallThickness,0,-0.5f * cellWallThickness)) * glm::rotate(wallTranslateStack.top(),glm::radians(90.0f),glm::vec3(0.0f,1.0f,0.0f)) * xScaleTransform);
+				objectsList.push_back(o);
+				
+			}
+
+			//Bottom Wall?
+			if(i == ROW_COUNT - 1){
+				//cout<<"CELL CODE: "<<CELL_CODE<<endl;
+				if((CELL_CODE&1)==1){			
+					o = new Object();
+					o->init(tm);
+					o->setColor(0,1,0);
+					o->setTransform(glm::translate(glm::mat4(1.0f),glm::vec3(-5.0*cellWallThickness,0,(-cellWallZ)+(0.5f * cellWallThickness))) * glm::rotate(wallTranslateStack.top(),glm::radians(90.0f),glm::vec3(0.0f,1.0f,0.0f)) * xScaleTransform);
+					objectsList.push_back(o);
+				}
+			}
+
+
+			//Right Wall?
+			if(j == COLUMN_COUNT - 1){			
+				if((CELL_CODE&2)==2){
+					o = new Object();
+					o->init(tm);
+					o->setColor(0,1,0);
+					wallTranslateStack.top() *= glm::translate(glm::mat4(1.0f),glm::vec3(cellWallX,0,0));
+					o->setTransform(glm::translate(glm::mat4(1.0f),glm::vec3(0.5f * cellWallThickness,0,-5.0*cellWallThickness*(1.0f/colToRowRatio))) *  wallTranslateStack.top() * zScaleTransform);
+					objectsList.push_back(o);
+
+				}
+			}
+		}
+
+		wallTranslateStack.pop();
+		wallTranslateStack.push(wallTranslateStack.top() * glm::translate(glm::mat4(1.0f),glm::vec3(0,0,-cellWallZ)));
+	}
+}
+
+void View3DMaze::placeMartiniGlass(TriangleMesh &tm, float floorX, float floorY, float floorZ){
+
+	//int holeIndex = (mazeIndicesWithHoles.size() == 1) ? 0 : rand() % mazeIndicesWithHoles.size();
+	
+	srand ( time(NULL) ); //initialize the random seed
+
+	const int ROW_COUNT = maze->getRowCount();
+	const int COLUMN_COUNT = maze->getColumnCount();
+
+	float cellWallX = -1.0f * (floorX)/(float)COLUMN_COUNT;
+	float cellWallY = (float)floorY;
+	float cellWallZ = floorZ/(float)ROW_COUNT;
+
+	float cellWallThickness = -1.0f * cellWallX/10.0f;
+
+	int holeIndex = std::rand() % mazeIndicesWithHoles.size();
+
+	int columnNumber = mazeIndicesWithHoles[holeIndex][0];
+	int rowNumber = mazeIndicesWithHoles[holeIndex][1];
+
+	cout<<"Hole List SIZE: "<<mazeIndicesWithHoles.size()<<endl;
+	cout<<"HOLE INDEX: "<<holeIndex<<endl;
+	cout<<"(COLUMN,ROW): "<<columnNumber<<", "<<rowNumber<<endl;
+
+	float xTranslateFixer = colToRowRatio;
+	float zTranslateFixer = 1.0f;
+
+	
+	//right by .5, down by .5
+	glm::mat4 glassTransform =  
+		glm::translate(glm::mat4(1.0f),glm::vec3(columnNumber*cellWallX + (cellWallX * 0.5f),0,-rowNumber*cellWallZ - (0.5f*cellWallZ))) 
+		* glm::translate(glm::mat4(1.0f),glm::vec3(floorX/2.0f,floorY+floorY*1.0f/2.0f,floorZ/2.0f)) 
+		* glm::scale(glm::mat4(1.0f),glm::vec3(cellWallZ-cellWallThickness/colToRowRatio,cellWallZ-cellWallThickness/colToRowRatio,cellWallZ-cellWallThickness/colToRowRatio));
+
+	Object* o = new Object();
+	OBJImporter::importFile(tm,string("models/martini_glass"),false);
+	o->init(tm);
+	o->setColor(1,0,0);
+	o->setTransform(glassTransform);
+	objectsList.push_back(o);
+
+
+
+
+
 
 }
 
@@ -221,27 +390,34 @@ void View3DMaze::draw(){
 	while (!modelView.empty())
         modelView.pop();
 
-	glEnable(GL_LINE_SMOOTH);// or GL_POLYGON_SMOOTH 
+	/*glEnable(GL_POLYGON_SMOOTH);// or GL_POLYGON_SMOOTH 
 	glEnable(GL_BLEND); 
-	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA); ;
-	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST); //GL_FASTEST,GL_DONT_CARE 
+	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+	glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST); //GL_FASTEST,GL_DONT_CARE */
 
 	modelView.push(glm::mat4(1.0));
     modelView.top() *= glm::lookAt(
-		glm::vec3(0,10,50),
+		glm::vec3(0,10,-50),
 		glm::vec3(0,0,0),
 		glm::vec3(0,1,0));
 
-	modelView.top() *= mazeTransform;
+	
     glUniformMatrix4fv(projectionLocation,1,GL_FALSE,glm::value_ptr(proj.top()));
 
-	//glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
+	if(showWireFrame){
+		glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
+	} else {
+		glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
+	}
+
+	modelView.top() *= mazeTransform;
+
 	for(int i = 0 ; i < objectsList.size(); i++){
-		modelView.top() *= objectsList[i]->getTransform() * glm::translate(glm::mat4(1.0f),glm::vec3(0,-10.0f,0));
+		glm::mat4 transform = objectsList[i]->getTransform();
         glm::vec4 color = objectsList[i]->getColor();
 
 		//The total transformation is whatever was passed to it, with its own transformation
-        glUniformMatrix4fv(modelViewLocation,1,GL_FALSE,glm::value_ptr(modelView.top()));
+		glUniformMatrix4fv(modelViewLocation,1,GL_FALSE,glm::value_ptr(modelView.top() * transform));
         //set the color for all vertices to be drawn for this object
         glVertexAttrib3fv(objectColorLocation,glm::value_ptr(color));
 
