@@ -20,7 +20,7 @@ int frames;
 double frame_rate;
 int mouseX, mouseY;
 bool mouseIsPressed = false;
-bool showWireFrame = false;
+bool showWireFrame = true;
 
 View3DMaze v;
 sf::RenderWindow* renderWindow;
@@ -61,7 +61,7 @@ int main(int argc, char *argv[]){
     }
 
 
-	Maze maze("maze-17x17.txt");
+	Maze maze("maze-10x10.txt");
 	pMaze=&maze;
 	initialize();
 
@@ -202,6 +202,7 @@ void initialize()
     cout << "GLSL version supported : "<<major<<"."<<minor << endl;
 
 	v.initialize(pMaze);
+	v.setShowWireFrame(showWireFrame);
 
 	//if (!font.loadFromFile("resources/sansation.ttf"))
 		//return;

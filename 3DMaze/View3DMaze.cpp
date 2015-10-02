@@ -152,11 +152,7 @@ void View3DMaze::onMouseMoved(const int mouseX, const int mouseY){
 	if(mouseY < lastY)
 		x*=-1;
 
-	mazeTransform = glm::rotate(
-		mazeTransform,
-		theta,
-		glm::vec3(x,y,z)
-		);
+	mazeTransform = glm::rotate(glm::mat4(1.0f),theta,glm::vec3(x,y,z)) * mazeTransform;
 
 	lastX = mouseX;
 	lastY = mouseY;
@@ -338,7 +334,6 @@ void View3DMaze::createWallsAndFindHoles(TriangleMesh &tm,float floorX, float fl
 
 void View3DMaze::placeMartiniGlass(TriangleMesh &tm, float floorX, float floorY, float floorZ){
 
-	//int holeIndex = (mazeIndicesWithHoles.size() == 1) ? 0 : rand() % mazeIndicesWithHoles.size();
 	
 	srand ( time(NULL) ); //initialize the random seed
 
@@ -364,11 +359,12 @@ void View3DMaze::placeMartiniGlass(TriangleMesh &tm, float floorX, float floorY,
 	float zTranslateFixer = 1.0f;
 
 	
-	//right by .5, down by .5
 	glm::mat4 glassTransform =  
 		glm::translate(glm::mat4(1.0f),glm::vec3(columnNumber*cellWallX + (cellWallX * 0.5f),0,-rowNumber*cellWallZ - (0.5f*cellWallZ))) 
-		* glm::translate(glm::mat4(1.0f),glm::vec3(floorX/2.0f,floorY+floorY*1.0f/2.0f,floorZ/2.0f)) 
-		* glm::scale(glm::mat4(1.0f),glm::vec3(cellWallZ-cellWallThickness/colToRowRatio,cellWallZ-cellWallThickness/colToRowRatio,cellWallZ-cellWallThickness/colToRowRatio));
+		* glm::translate(glm::mat4(1.0f),glm::vec3(floorX/2.0f,cellWallY*0.5f,floorZ/2.0f))
+		*glm::scale(glm::mat4(1.0f),glm::vec3(cellWallZ*3,cellWallZ*3,cellWallZ*3));
+		;
+
 
 	Object* o = new Object();
 	OBJImporter::importFile(tm,string("models/martini_glass"),false);
@@ -390,10 +386,6 @@ void View3DMaze::draw(){
 	while (!modelView.empty())
         modelView.pop();
 
-	/*glEnable(GL_POLYGON_SMOOTH);// or GL_POLYGON_SMOOTH 
-	glEnable(GL_BLEND); 
-	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-	glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST); //GL_FASTEST,GL_DONT_CARE */
 
 	modelView.push(glm::mat4(1.0));
     modelView.top() *= glm::lookAt(
