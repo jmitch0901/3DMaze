@@ -212,9 +212,6 @@ void View3DMaze::initialize(Maze* maze){
 	o->setTransform(glm::scale(glm::mat4(1.0),glm::vec3(floorX,floorY,floorZ)));
 	objectsList.push_back(o);
 
-	glm::vec3 xmlReferencer;
-	xmlReferencer=glm::vec3(o->getTransform()[3]);
-
 	//XML the maze floor
 	stringstream ss;
 
@@ -260,18 +257,18 @@ void View3DMaze::createWallsAndFindHoles(TriangleMesh &tm,float floorX, float fl
 	const int ROW_COUNT = maze->getRowCount();
 	const int COLUMN_COUNT = maze->getColumnCount();
 
-	float cellWallX = -1.0f* (floorX)/(float)COLUMN_COUNT;
+	float cellWallX = 1.0f* (floorX)/(float)COLUMN_COUNT;
 	float cellWallY = (float)floorY;
-	float cellWallZ = floorZ/(float)ROW_COUNT;
+	float cellWallZ = -floorZ/(float)ROW_COUNT;
 
 	float cellWallThickness = -1.0f * cellWallX/10.0f;
 
 	//We initialize assuming that the maze is square, or there are more rows than columns. The math will work either way.
 	glm::mat4 xScaleTransform 
-		= glm::scale(glm::mat4(1.0f),glm::vec3(cellWallThickness,floorY,cellWallZ*colToRowRatio));
+		= glm::scale(glm::mat4(1.0f),glm::vec3(cellWallThickness,floorY,-cellWallZ*colToRowRatio));
 
 	glm::mat4 zScaleTransform 
-		= glm::scale(glm::mat4(1.0f),glm::vec3(cellWallThickness,floorY,cellWallZ));
+		= glm::scale(glm::mat4(1.0f),glm::vec3(cellWallThickness,floorY,-cellWallZ));
 
 	float xTranslateFixer = colToRowRatio;
 	float zTranslateFixer = 1.0f;
@@ -279,10 +276,10 @@ void View3DMaze::createWallsAndFindHoles(TriangleMesh &tm,float floorX, float fl
 	//If there are more columns than rows, that we need to reverse the scaling transforms...
 	if(COLUMN_COUNT>ROW_COUNT){
 		xScaleTransform 
-			= glm::scale(glm::mat4(1.0f),glm::vec3(cellWallThickness,floorY,cellWallZ*colToRowRatio));
+			= glm::scale(glm::mat4(1.0f),glm::vec3(cellWallThickness,floorY,-cellWallZ*colToRowRatio));
 
 		zScaleTransform 
-			= glm::scale(glm::mat4(1.0f),glm::vec3(cellWallThickness,floorY,cellWallZ));
+			= glm::scale(glm::mat4(1.0f),glm::vec3(cellWallThickness,floorY,-cellWallZ));
 
 	}
 
@@ -293,7 +290,7 @@ void View3DMaze::createWallsAndFindHoles(TriangleMesh &tm,float floorX, float fl
 	wallTranslateStack.push(glm::mat4(1.0f));
 
 	//For COLUMNS
-	wallTranslateStack.push(glm::translate(glm::mat4(1.0f),glm::vec3(floorX/2.0f,floorY,floorZ/2.0f)));
+	wallTranslateStack.push(glm::translate(glm::mat4(1.0f),glm::vec3(-floorX/2.0f,floorY,-floorZ/2.0f)));
 
 	glm::vec3 xmlReferencer;
 
@@ -321,9 +318,7 @@ void View3DMaze::createWallsAndFindHoles(TriangleMesh &tm,float floorX, float fl
 			
 			//Left Wall
 			if((CELL_CODE&8)==8){
-				
-
-				
+								
 				o = new Object();
 				o->init(tm);
 				o->setColor(0,1,0);
@@ -515,7 +510,7 @@ void View3DMaze::draw(){
 
 	modelView.push(glm::mat4(1.0));
     modelView.top() *= glm::lookAt(
-		glm::vec3(0,10,-50),
+		glm::vec3(0,10,50),
 		glm::vec3(0,0,0),
 		glm::vec3(0,1,0));
 

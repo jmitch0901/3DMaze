@@ -61,7 +61,7 @@ int main(int argc, char *argv[]){
     }
 
 
-	Maze maze("maze-10x10.txt");
+	Maze maze("maze-50x50.txt");
 	pMaze=&maze;
 	initialize();
 
@@ -124,7 +124,7 @@ void processEvent(sf::Event event,sf::RenderWindow& window)
 
 	if(mouseIsPressed && event.type == sf::Event::MouseMoved){
 		mouseX = sf::Mouse::getPosition(window).x;
-		mouseY = window.getSize().y - sf::Mouse::getPosition(window).y;
+		mouseY = sf::Mouse::getPosition(window).y;
 
 		//v.onMouseMoved(mouseX,sf::Mouse::getPosition(window).y);
 		v.onMouseMoved(mouseX,mouseY);
