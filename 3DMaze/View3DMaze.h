@@ -24,6 +24,10 @@ class View3DMaze{
 	enum Buffer_IDs {ArrayBuffer,IndexBuffer,NumBuffers};
 
 private:
+
+	vector<string> xmlStrings;
+
+
 	int WINDOW_WIDTH, WINDOW_HEIGHT;
 	float aspectRatio;
 	float colToRowRatio;
@@ -68,6 +72,8 @@ public:
 
 	void getOpenGLVersion(int *major, int *minor);
 	void getGLSLVersion(int *major, int *minor);
+
+	void toSceneGraphXML() const;
 
 protected:
 	

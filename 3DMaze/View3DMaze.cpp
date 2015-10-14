@@ -13,6 +13,19 @@
 */
 using namespace std;
 
+void View3DMaze::toSceneGraphXML() const{
+
+	ofstream os;
+	os.open("scene-maze.xml");
+	for(int i =0; i < xmlStrings.size(); i++){
+		os<<xmlStrings[i];
+	}
+
+	os.close();
+
+
+}
+
 View3DMaze::View3DMaze(){
 	mazeTransform = glm::mat4(1.0f);
 	showWireFrame = false;
@@ -199,12 +212,37 @@ void View3DMaze::initialize(Maze* maze){
 	o->setTransform(glm::scale(glm::mat4(1.0),glm::vec3(floorX,floorY,floorZ)));
 	objectsList.push_back(o);
 
+	glm::vec3 xmlReferencer;
+	xmlReferencer=glm::vec3(o->getTransform()[3]);
+
+	//XML the maze floor
+	stringstream ss;
+
+	ss<<"<scene><instance name=\"box\" path=\"models/box\" />";
+
+
+	//test
+	ss<<"<transform><set><scale>2 2 2</scale></set><group>";
+	//test
+
+
+	ss<<"<transform><set><scale>"<<floorX<<" "<<floorY<<" "<<floorZ<<"</scale></set>";
+	ss<<"<object instanceof=\"box\"><material><color>0 1 0</color></material></object></transform>";
+
+	
+	xmlStrings.push_back(ss.str());
+
+	//xmlStrings.push_back("<transform><set>"+floorX+" "+floorY+" "+floorZ+"");
+	//xmlStrings.push_back("<object instanceof=\"box\">");
+
 	createWallsAndFindHoles(tm,floorX,floorY,floorZ);
 	if(mazeIndicesWithHoles.empty()){
 		cout<<"There are no holes in this maze! Cannot create mesh object!"<<endl;
 	} else {
 		placeMartiniGlass(tm,floorX,floorY,floorZ);
 	}
+
+	toSceneGraphXML();
 
 	glUseProgram(0);
 	
@@ -213,6 +251,8 @@ void View3DMaze::initialize(Maze* maze){
 void View3DMaze::createWallsAndFindHoles(TriangleMesh &tm,float floorX, float floorY, float floorZ){
 
 	Object *o;
+
+	stringstream ss;
 
 	//The stack so we can reference a previous transformed box.
 	
@@ -255,6 +295,8 @@ void View3DMaze::createWallsAndFindHoles(TriangleMesh &tm,float floorX, float fl
 	//For COLUMNS
 	wallTranslateStack.push(glm::translate(glm::mat4(1.0f),glm::vec3(floorX/2.0f,floorY,floorZ/2.0f)));
 
+	glm::vec3 xmlReferencer;
+
 	for(int i = 0; i < ROW_COUNT; i++){
 
 		for(int j = 0; j < COLUMN_COUNT; j++){
@@ -279,12 +321,32 @@ void View3DMaze::createWallsAndFindHoles(TriangleMesh &tm,float floorX, float fl
 			
 			//Left Wall
 			if((CELL_CODE&8)==8){
+				
+
+				
 				o = new Object();
 				o->init(tm);
 				o->setColor(0,1,0);
 				o->setTransform(glm::translate(glm::mat4(1.0f),glm::vec3(-0.5f * cellWallThickness,0,-5.0f * cellWallThickness * (1.0f/colToRowRatio))) * wallTranslateStack.top() * zScaleTransform);
 				//o->setTransform(wallTranslateStack.top() * scaleTransform);
-				objectsList.push_back(o);
+				objectsList.push_back(o);	
+
+				stringstream ss;
+
+				ss<<"<transform><set>";
+
+				xmlReferencer = glm::vec3(cellWallThickness,floorY,cellWallZ*colToRowRatio);
+				ss<<"<scale>"<<xmlReferencer.x<<" "<<xmlReferencer.y<<" "<<xmlReferencer.z<<"</scale>";
+				
+				xmlReferencer = glm::vec3((glm::translate(glm::mat4(1.0f),glm::vec3(-0.5f * cellWallThickness,0,-5.0f * cellWallThickness * (1.0f/colToRowRatio))) * wallTranslateStack.top())[3]);					
+				ss<<"<translate>"<<xmlReferencer.x<<" "<<xmlReferencer.y<<" "<<xmlReferencer.z<<"</translate>";
+
+				ss<<"</set>";
+
+				ss<<"<object instanceof=\"box\"><material><color>1 0 0</color></material></object></transform>";
+				xmlStrings.push_back(ss.str());
+
+
 			}
 
 		
@@ -295,8 +357,28 @@ void View3DMaze::createWallsAndFindHoles(TriangleMesh &tm,float floorX, float fl
 				o->init(tm);
 				o->setColor(0,1,0);
 				//o->setTransform(glm::translate(glm::mat4(1.0f),glm::vec3(-2*cellWallY,0,-0.5f * cellWallY)) * glm::rotate(wallTranslateStack.top(),glm::radians(90.0f),glm::vec3(0.0f,1.0f,0.0f)) * scaleTransform);
-				o->setTransform(glm::translate(glm::mat4(1.0f),glm::vec3(-5.0f*cellWallThickness,0,-0.5f * cellWallThickness)) * glm::rotate(wallTranslateStack.top(),glm::radians(90.0f),glm::vec3(0.0f,1.0f,0.0f)) * xScaleTransform);
+				o->setTransform(glm::translate(glm::mat4(1.0f), glm::vec3(-5.0f*cellWallThickness,0,-0.5f * cellWallThickness)) * glm::rotate(wallTranslateStack.top(),glm::radians(90.0f),glm::vec3(0.0f,1.0f,0.0f)) * xScaleTransform);
 				objectsList.push_back(o);
+
+				stringstream ss;
+
+				ss<<"<transform><set>";
+
+
+				xmlReferencer = glm::vec3(cellWallThickness,floorY,cellWallZ*colToRowRatio);
+				ss<<"<scale>"<<xmlReferencer.x<<" "<<xmlReferencer.y<<" "<<xmlReferencer.z<<"</scale>";
+	
+				ss<<"<rotate>90 0 1 0</rotate>";
+				
+				xmlReferencer = glm::vec3((glm::translate(glm::mat4(1.0f), glm::vec3(-5.0f*cellWallThickness,0,-0.5f * cellWallThickness))+wallTranslateStack.top())[3]);			
+				ss<<"<translate>"<<xmlReferencer.x<<" "<<xmlReferencer.y<<" "<<xmlReferencer.z<<"</translate>";
+
+				ss<<"</set>";
+
+
+				ss<<"<object instanceof=\"box\"><material><color>1 0 0</color></material></object></transform>";
+
+				xmlStrings.push_back(ss.str());
 				
 			}
 
@@ -309,6 +391,25 @@ void View3DMaze::createWallsAndFindHoles(TriangleMesh &tm,float floorX, float fl
 					o->setColor(0,1,0);
 					o->setTransform(glm::translate(glm::mat4(1.0f),glm::vec3(-5.0*cellWallThickness,0,(-cellWallZ)+(0.5f * cellWallThickness))) * glm::rotate(wallTranslateStack.top(),glm::radians(90.0f),glm::vec3(0.0f,1.0f,0.0f)) * xScaleTransform);
 					objectsList.push_back(o);
+
+				stringstream ss;
+
+				ss<<"<transform><set>";
+
+
+				xmlReferencer = glm::vec3(cellWallThickness,floorY,cellWallZ*colToRowRatio);
+				ss<<"<scale>"<<xmlReferencer.x<<" "<<xmlReferencer.y<<" "<<xmlReferencer.z<<"</scale>";
+
+				ss<<"<rotate>90 0 1 0</rotate>";
+				
+				xmlReferencer = glm::vec3((glm::translate(glm::mat4(1.0f),glm::vec3(-5.0*cellWallThickness,0,(-cellWallZ)+0.5f * cellWallThickness))+wallTranslateStack.top())[3]);					
+				ss<<"<translate>"<<xmlReferencer.x<<" "<<xmlReferencer.y<<" "<<xmlReferencer.z<<"</translate>";
+
+				ss<<"</set>";
+
+				ss<<"<object instanceof=\"box\"><material><color>1 0 0</color></material></object></transform>";
+				xmlStrings.push_back(ss.str());
+					
 				}
 			}
 
@@ -316,12 +417,31 @@ void View3DMaze::createWallsAndFindHoles(TriangleMesh &tm,float floorX, float fl
 			//Right Wall?
 			if(j == COLUMN_COUNT - 1){			
 				if((CELL_CODE&2)==2){
-					o = new Object();
-					o->init(tm);
-					o->setColor(0,1,0);
-					wallTranslateStack.top() *= glm::translate(glm::mat4(1.0f),glm::vec3(cellWallX,0,0));
-					o->setTransform(glm::translate(glm::mat4(1.0f),glm::vec3(0.5f * cellWallThickness,0,-5.0*cellWallThickness*(1.0f/colToRowRatio))) *  wallTranslateStack.top() * zScaleTransform);
-					objectsList.push_back(o);
+				o = new Object();
+				o->init(tm);
+				o->setColor(0,1,0);
+				wallTranslateStack.top() *= glm::translate(glm::mat4(1.0f),glm::vec3(cellWallX,0,0));
+				o->setTransform(glm::translate(glm::mat4(1.0f), glm::vec3(0.5f * cellWallThickness,0,-5.0*cellWallThickness*(1.0f/colToRowRatio))) *  wallTranslateStack.top() * zScaleTransform);
+				objectsList.push_back(o);
+
+
+				stringstream ss;
+
+				ss<<"<transform><set>";
+
+
+				xmlReferencer = glm::vec3(cellWallThickness,floorY,cellWallZ*colToRowRatio);
+				ss<<"<scale>"<<xmlReferencer.x<<" "<<xmlReferencer.y<<" "<<xmlReferencer.z<<"</scale>";
+				
+				xmlReferencer = glm::vec3((glm::translate(glm::mat4(1.0f), glm::vec3(0.5f * cellWallThickness,0,-5.0*cellWallThickness*(1.0f/colToRowRatio))) *  wallTranslateStack.top())[3]);					
+				ss<<"<translate>"<<xmlReferencer.x<<" "<<xmlReferencer.y<<" "<<xmlReferencer.z<<"</translate>";
+
+				ss<<"</set>";
+
+				ss<<"<object instanceof=\"box\"><material><color>1 0 0</color></material></object></transform>";
+				xmlStrings.push_back(ss.str());
+
+					
 
 				}
 			}
@@ -330,6 +450,12 @@ void View3DMaze::createWallsAndFindHoles(TriangleMesh &tm,float floorX, float fl
 		wallTranslateStack.pop();
 		wallTranslateStack.push(wallTranslateStack.top() * glm::translate(glm::mat4(1.0f),glm::vec3(0,0,-cellWallZ)));
 	}
+
+	//test
+	xmlStrings.push_back("</group></transform>");
+	//test
+
+	xmlStrings.push_back("</scene>");
 }
 
 void View3DMaze::placeMartiniGlass(TriangleMesh &tm, float floorX, float floorY, float floorZ){
